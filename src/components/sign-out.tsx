@@ -5,7 +5,6 @@ import { Button } from "./ui/button";
 
 export default function SignOut() {
 	const onLogout = async () => {
-		"use server";
 		await logout();
 
 		window.location.replace("/login");
