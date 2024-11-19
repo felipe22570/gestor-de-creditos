@@ -24,6 +24,7 @@ export const credits = sqliteTable("credits", {
 	totalAmount: integer("total_amount").notNull(),
 	startDate: integer("start_date", { mode: "timestamp" }).default(sql`(strftime('%s','now'))`),
 	modifiedDate: integer("modified_date", { mode: "timestamp" }).default(sql`(strftime('%s','now'))`),
+	nextPaymentDate: integer("next_payment_date", { mode: "timestamp" }),
 	numPayments: integer("num_payments"),
 });
 

@@ -6,6 +6,7 @@ import { columns } from "./columns";
 import { Credit } from "@/types/schema";
 import {
 	getCoreRowModel,
+	getFilteredRowModel,
 	getPaginationRowModel,
 	useReactTable,
 	VisibilityState,
@@ -26,22 +27,31 @@ interface Props {
 
 export default function CreditsActiveTable({ data }: Props) {
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+	const [globalFilter, setGlobalFilter] = useState<unknown>([]);
 
 	const table = useReactTable({
 		data,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
 		onColumnVisibilityChange: setColumnVisibility,
 		state: {
 			columnVisibility,
+			globalFilter,
 		},
+		onGlobalFilterChange: setGlobalFilter,
 	});
 
 	return (
 		<div>
 			<div className="flex justify-between mt-10 mb-5">
-				<Input type="text" placeholder="Buscar..." className="w-1/3" />
+				<Input
+					type="text"
+					placeholder="Buscar..."
+					onChange={(e) => table.setGlobalFilter(String(e.target.value))}
+					className="w-1/3"
+				/>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="outline" className="ml-auto">

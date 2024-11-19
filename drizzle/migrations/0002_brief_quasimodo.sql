@@ -1,0 +1,1 @@
+ALTER TABLE `credits` ADD `next_payment_date` integer;

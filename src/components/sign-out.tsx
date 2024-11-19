@@ -11,8 +11,8 @@ export default function SignOut() {
 	};
 
 	return (
-		<div className="ml-2">
-			<Button onClick={onLogout}>
+		<div>
+			<Button variant="outline" onClick={onLogout}>
 				<svg
 					className="w-5 h-5"
 					fill="none"

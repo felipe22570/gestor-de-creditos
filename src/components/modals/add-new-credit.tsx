@@ -10,18 +10,12 @@ import { createCredit } from "@/lib/actions/credit";
 import { CreditRequest } from "@/types/credit";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
-const formatCOP = (value: number) => {
-	const formattedValue = new Intl.NumberFormat("es-CO", {
-		style: "currency",
-		currency: "COP",
-		minimumFractionDigits: 0,
-	}).format(value);
-
-	return formattedValue;
-};
+import { useToast } from "@/hooks/use-toast";
+import { formatCOP } from "@/lib/utils";
 
 export default function AddNewCreditModal() {
+	const { toast } = useToast();
+
 	const [isOpen, setIsOpen] = useState(false);
 	const [formData, setFormData] = useState({
 		clienCardId: "",
@@ -85,16 +79,31 @@ export default function AddNewCreditModal() {
 			numPayments: 0,
 		};
 
-		await createCredit(formattedFormData);
+		try {
+			await createCredit(formattedFormData);
 
-		// Here you would typically send the data to your backend
-		setIsOpen(false);
+			toast({
+				title: "Credito creado exitosamente!",
+				variant: "success",
+				duration: 1500,
+			});
+		} catch (error) {
+			console.error(error);
+
+			toast({
+				title: "Error al crear el credito",
+				variant: "destructive",
+				duration: 1500,
+			});
+		} finally {
+			setIsOpen(false);
+		}
 	};
 
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>
-				<Button variant="outline">Agregar Nuevo Crédito</Button>
+				<Button variant="default">Agregar Nuevo Crédito</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-[525px]">
 				<DialogHeader>

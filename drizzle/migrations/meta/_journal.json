@@ -15,6 +15,13 @@
       "when": 1729783830311,
       "tag": "0001_big_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1731987805942,
+      "tag": "0002_brief_quasimodo",
+      "breakpoints": true
     }
   ]
 }
