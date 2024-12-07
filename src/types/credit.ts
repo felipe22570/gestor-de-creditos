@@ -7,5 +7,6 @@ export interface CreditRequest {
 	initialAmount: number;
 	interestRate: number;
 	totalAmount: number;
-	numPayments: number;
+	numPayments?: number;
+	nextPaymentDate?: Date;
 }

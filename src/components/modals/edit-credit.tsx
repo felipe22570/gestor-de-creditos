@@ -1,34 +1,35 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createCredit } from "@/lib/actions/credit";
-import { CreditRequest } from "@/types/credit";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
+import { Credit } from "@/types/schema";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
 import { formatCOP } from "@/lib/utils";
-import { add } from "date-fns";
+import { editCredit } from "@/lib/actions/credit";
+import { CreditRequest } from "@/types/credit";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
-export default function AddNewCreditModal() {
+interface Props {
+	isOpen: boolean;
+	setIsOpen: (isOpen: boolean) => void;
+	credit: Credit | null;
+}
+
+export default function EditCreditModal({ isOpen, setIsOpen, credit }: Props) {
 	const { toast } = useToast();
 
-	const [isOpen, setIsOpen] = useState(false);
-	const [formData, setFormData] = useState({
-		clienCardId: "",
-		clientName: "",
-		clientPhone: "",
-		productName: "",
-		value: "",
-		interestRate: "",
-	});
-
-	const session = useSession();
 	const router = useRouter();
+
+	const [formData, setFormData] = useState({
+		clienCardId: credit?.clientCardId || "",
+		clientName: credit?.clientName || "",
+		clientPhone: credit?.clientPhone || "",
+		productName: credit?.productName || "",
+		value: credit?.initialAmount || "",
+		interestRate: credit?.interestRate || "",
+	});
 
 	const [totalAmount, setTotalAmount] = useState(0);
 
@@ -50,42 +51,24 @@ export default function AddNewCreditModal() {
 		setTotalAmount(total);
 	}, [formData.value, formData.interestRate]);
 
-	useEffect(() => {
-		if (isOpen) {
-			setFormData({
-				clienCardId: "",
-				clientName: "",
-				clientPhone: "",
-				productName: "",
-				value: "",
-				interestRate: "",
-			});
-		} else {
-			router.refresh();
-		}
-	}, [isOpen, router]);
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		const formattedFormData: CreditRequest = {
+		const newCredit: Partial<CreditRequest> = {
 			clientCardId: Number(formData.clienCardId),
-			adminId: Number(session?.data?.user?.id),
 			clientName: formData.clientName,
 			clientPhone: formData.clientPhone,
 			productName: formData.productName,
 			initialAmount: Number(formData.value),
 			interestRate: Number(formData.interestRate),
 			totalAmount: totalAmount,
-			numPayments: 0,
-			nextPaymentDate: add(new Date(), { months: 1 }),
 		};
 
 		try {
-			await createCredit(formattedFormData);
+			await editCredit(credit?.id as number, newCredit);
 
 			toast({
-				title: "Credito creado exitosamente!",
+				title: "Credito editado exitosamente!",
 				variant: "success",
 				duration: 1500,
 			});
@@ -93,23 +76,21 @@ export default function AddNewCreditModal() {
 			console.error(error);
 
 			toast({
-				title: "Error al crear el credito",
+				title: "Error al editar el credito",
 				variant: "destructive",
 				duration: 1500,
 			});
 		} finally {
 			setIsOpen(false);
+			router.refresh();
 		}
 	};
 
 	return (
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
-			<DialogTrigger asChild>
-				<Button variant="default">Agregar Nuevo Crédito</Button>
-			</DialogTrigger>
-			<DialogContent className="sm:max-w-[525px]">
+			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Agregar Nuevo Crédito</DialogTitle>
+					<DialogTitle>Editar Credito</DialogTitle>
 				</DialogHeader>
 				<form onSubmit={handleSubmit} className="grid gap-4 py-4">
 					<div className="items-center gap-4">
@@ -173,10 +154,6 @@ export default function AddNewCreditModal() {
 							className="col-span-3"
 							value={formData.value}
 							onChange={handleInputChange}
-							// onBlur={(e) => {
-							// 	const formatted = formatCOP(Number(e.target.value));
-							// 	setFormData((prev) => ({ ...prev, value: formatted }));
-							// }}
 						/>
 					</div>
 					<div className="items-center gap-4">
