@@ -26,9 +26,10 @@ import { Button } from "@/components/ui/button";
 import EditCreditModal from "@/components/modals/edit-credit";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { CircleDollarSign, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { fetchCreditById } from "@/lib/actions/credit";
 import DeleteCreditModal from "@/components/modals/delete-credit";
+import PaymentModal from "@/components/modals/payment";
 
 interface Props {
 	data: Credit[];
@@ -41,6 +42,8 @@ export default function CreditsActiveTable({ data }: Props) {
 	const [openDeleteCreditModal, setOpenDeleteCreditModal] = useState(false);
 	const [creditToEdit, setCreditToEdit] = useState<Credit | null>(null);
 	const [creditToDelete, setCreditToDelete] = useState<number | null>(null);
+	const [openPaymentModal, setOpenPaymentModal] = useState(false);
+	const [creditToPay, setCreditToPay] = useState<Credit | null>(null);
 
 	const columns: ColumnDef<Credit>[] = [
 		{
@@ -138,8 +141,15 @@ export default function CreditsActiveTable({ data }: Props) {
 						<DropdownMenuContent align="end">
 							<DropdownMenuLabel>Acciones</DropdownMenuLabel>
 							<DropdownMenuItem
+								onClick={() => onPayCredit(credit)}
+								className="cursor-pointer text-green-700"
+							>
+								<CircleDollarSign />
+								Abonar
+							</DropdownMenuItem>
+							<DropdownMenuItem
 								onClick={() => onEditCredit(credit.id)}
-								className="text-blue-500 cursor-pointer"
+								className="text-blue-600 cursor-pointer"
 							>
 								<Pencil />
 								Editar
@@ -172,6 +182,11 @@ export default function CreditsActiveTable({ data }: Props) {
 		setOpenDeleteCreditModal(true);
 	};
 
+	const onPayCredit = async (credit: Credit) => {
+		setCreditToPay(credit);
+		setOpenPaymentModal(true);
+	};
+
 	useEffect(() => {
 		if (!openEditCreditModal) {
 			setCreditToEdit(null);
@@ -183,6 +198,12 @@ export default function CreditsActiveTable({ data }: Props) {
 			setCreditToDelete(null);
 		}
 	}, [openDeleteCreditModal]);
+
+	useEffect(() => {
+		if (!openPaymentModal) {
+			setCreditToPay(null);
+		}
+	}, [openPaymentModal]);
 
 	const table = useReactTable({
 		data,
@@ -253,6 +274,14 @@ export default function CreditsActiveTable({ data }: Props) {
 					isOpen={openDeleteCreditModal}
 					setIsOpen={setOpenDeleteCreditModal}
 					creditId={creditToDelete}
+				/>
+			)}
+
+			{creditToPay && (
+				<PaymentModal
+					isOpen={openPaymentModal}
+					setIsOpen={setOpenPaymentModal}
+					credit={creditToPay}
 				/>
 			)}
 		</div>
