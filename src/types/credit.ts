@@ -1,4 +1,5 @@
 export interface CreditRequest {
+	startDate: Date;
 	clientCardId: number;
 	adminId: number;
 	clientName: string;

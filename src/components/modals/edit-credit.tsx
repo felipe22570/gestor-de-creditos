@@ -10,6 +10,8 @@ import { editCredit } from "@/lib/actions/credit";
 import { CreditRequest } from "@/types/credit";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { DatePicker } from "../ui/date-picker";
+import { add } from "date-fns";
 
 interface Props {
 	isOpen: boolean;
@@ -30,6 +32,8 @@ export default function EditCreditModal({ isOpen, setIsOpen, credit }: Props) {
 		value: credit?.initialAmount || "",
 		interestRate: credit?.interestRate || "",
 	});
+
+	const [creditDate, setCreditDate] = useState<Date | undefined>(credit?.startDate as Date);
 
 	const [totalAmount, setTotalAmount] = useState(0);
 
@@ -62,6 +66,8 @@ export default function EditCreditModal({ isOpen, setIsOpen, credit }: Props) {
 			initialAmount: Number(formData.value),
 			interestRate: Number(formData.interestRate),
 			totalAmount: totalAmount,
+			startDate: creditDate,
+			nextPaymentDate: add(creditDate as Date, { months: 1 }),
 		};
 
 		try {
@@ -168,6 +174,11 @@ export default function EditCreditModal({ isOpen, setIsOpen, credit }: Props) {
 							value={formData.interestRate}
 							onChange={handleInputChange}
 						/>
+					</div>
+
+					<div className=" flex flex-col justify-start gap-4">
+						<Label htmlFor="creditDate">Fecha:</Label>
+						<DatePicker value={creditDate} onChange={setCreditDate} />
 					</div>
 
 					<p className="text-sm text-muted-foreground mt-1">

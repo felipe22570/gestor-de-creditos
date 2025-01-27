@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { formatCOP } from "@/lib/utils";
 import { add } from "date-fns";
+import { DatePicker } from "../ui/date-picker";
 
 export default function AddNewCreditModal() {
 	const { toast } = useToast();
@@ -26,6 +27,8 @@ export default function AddNewCreditModal() {
 		value: "",
 		interestRate: "",
 	});
+
+	const [creditDate, setCreditDate] = useState<Date | undefined>();
 
 	const session = useSession();
 	const router = useRouter();
@@ -69,6 +72,7 @@ export default function AddNewCreditModal() {
 		e.preventDefault();
 
 		const formattedFormData: CreditRequest = {
+			startDate: creditDate ?? new Date(),
 			clientCardId: Number(formData.clienCardId),
 			adminId: Number(session?.data?.user?.id),
 			clientName: formData.clientName,
@@ -78,7 +82,7 @@ export default function AddNewCreditModal() {
 			interestRate: Number(formData.interestRate),
 			totalAmount: totalAmount,
 			numPayments: 0,
-			nextPaymentDate: add(new Date(), { months: 1 }),
+			nextPaymentDate: add(creditDate ?? new Date(), { months: 1 }),
 		};
 
 		try {
@@ -191,6 +195,11 @@ export default function AddNewCreditModal() {
 							value={formData.interestRate}
 							onChange={handleInputChange}
 						/>
+					</div>
+
+					<div className=" flex flex-col justify-start gap-4">
+						<Label htmlFor="creditDate">Fecha:</Label>
+						<DatePicker value={creditDate} onChange={setCreditDate} />
 					</div>
 
 					<p className="text-sm text-muted-foreground mt-1">
