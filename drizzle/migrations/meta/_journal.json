@@ -1,27 +1,34 @@
 {
-  "version": "7",
-  "dialect": "sqlite",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "6",
-      "when": 1728188218246,
-      "tag": "0000_nice_stepford_cuckoos",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1729783830311,
-      "tag": "0001_big_legion",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1731987805942,
-      "tag": "0002_brief_quasimodo",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "sqlite",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "6",
+			"when": 1728188218246,
+			"tag": "0000_nice_stepford_cuckoos",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "6",
+			"when": 1729783830311,
+			"tag": "0001_big_legion",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "6",
+			"when": 1731987805942,
+			"tag": "0002_brief_quasimodo",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "6",
+			"when": 1738075821316,
+			"tag": "0006_swift_king_cobra",
+			"breakpoints": true
+		}
+	]
 }

@@ -30,13 +30,14 @@ export const credits = sqliteTable("credits", {
 
 export const payments = sqliteTable("payments", {
 	id: integer("id", { mode: "number" }).notNull().primaryKey({ autoIncrement: true }),
-	admin_id: integer("admin_id")
+	adminId: integer("admin_id")
 		.references(() => users.id)
 		.notNull(),
-	credit_id: integer("credit_id")
+	creditId: integer("credit_id")
 		.references(() => credits.id)
 		.notNull(),
-	client_id: integer("client_id"),
-	payment_date: integer("start_date", { mode: "timestamp" }),
-	amount_paid: integer("amount_paid"),
+	creditName: text("credit_name").default(sql`""`),
+	clientId: integer("client_id"),
+	paymentDate: integer("start_date", { mode: "timestamp" }),
+	amountPaid: integer("amount_paid"),
 });
