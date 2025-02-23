@@ -7,6 +7,18 @@ import { Credit } from "@/types/schema";
 import { getNextPaymentDate } from "../utils";
 import { eq } from "drizzle-orm";
 
+export async function fetchPayments(adminId: number) {
+	try {
+		const paymentsData = await db.select().from(payments).where(eq(payments.adminId, adminId));
+
+		return paymentsData;
+	} catch (error) {
+		console.error(error);
+
+		return [];
+	}
+}
+
 export async function createPayment(credit: Credit, amount: number) {
 	const paymentData: PaymentRequest = {
 		adminId: credit.adminId,

@@ -72,7 +72,7 @@ export default function PaymentModal({ isOpen, setIsOpen, credit }: Props) {
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Realizar pago</DialogTitle>
+					<DialogTitle>Realizar pago a capital</DialogTitle>
 				</DialogHeader>
 				<div className="h-full">
 					<div className="">
