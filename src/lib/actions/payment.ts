@@ -27,6 +27,7 @@ export async function createPayment(credit: Credit, amount: number) {
 		creditName: credit.productName,
 		amountPaid: amount,
 		paymentDate: new Date(),
+		clientName: credit.clientName,
 	};
 
 	const nextPaymentDate = getNextPaymentDate(credit.nextPaymentDate as Date);

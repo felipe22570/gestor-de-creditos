@@ -41,6 +41,10 @@ export const columns: ColumnDef<Payment>[] = [
 		header: "Cédula del cliente",
 	},
 	{
+		accessorKey: "clientName",
+		header: "Nombre del cliente",
+	},
+	{
 		accessorKey: "creditName",
 		header: "Nombre del crédito",
 	},

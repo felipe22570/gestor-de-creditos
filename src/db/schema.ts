@@ -38,6 +38,7 @@ export const payments = sqliteTable("payments", {
 		.notNull(),
 	creditName: text("credit_name").default(sql`""`),
 	clientId: integer("client_id"),
+	clientName: text("client_name"),
 	paymentDate: integer("start_date", { mode: "timestamp" }),
 	amountPaid: integer("amount_paid"),
 });

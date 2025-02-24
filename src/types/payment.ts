@@ -5,4 +5,5 @@ export interface PaymentRequest {
 	creditName: string;
 	amountPaid: number;
 	paymentDate: Date;
+	clientName: string;
 }

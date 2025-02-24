@@ -22,13 +22,6 @@
 			"when": 1731987805942,
 			"tag": "0002_brief_quasimodo",
 			"breakpoints": true
-		},
-		{
-			"idx": 6,
-			"version": "6",
-			"when": 1738075821316,
-			"tag": "0006_swift_king_cobra",
-			"breakpoints": true
 		}
 	]
 }
