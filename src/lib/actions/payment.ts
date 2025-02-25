@@ -19,6 +19,16 @@ export async function fetchPayments(adminId: number) {
 	}
 }
 
+export async function fetchPaymentsByCreditId(creditId: number) {
+	try {
+		const paymentsData = await db.select().from(payments).where(eq(payments.creditId, creditId));
+		return paymentsData;
+	} catch (error) {
+		console.error(error);
+		return [];
+	}
+}
+
 export async function createPayment(credit: Credit, amount: number) {
 	const paymentData: PaymentRequest = {
 		adminId: credit.adminId,

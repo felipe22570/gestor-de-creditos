@@ -26,10 +26,12 @@ import { Button } from "@/components/ui/button";
 import EditCreditModal from "@/components/modals/edit-credit";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { CircleDollarSign, MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { CircleDollarSign, History, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { fetchCreditById } from "@/lib/actions/credit";
 import DeleteCreditModal from "@/components/modals/delete-credit";
 import PaymentModal from "@/components/modals/payment";
+// import PaymentInterestModal from "@/components/modals/payment-interest";
+import ViewPaymentsModal from "@/components/modals/view-payments";
 
 interface Props {
 	data: Credit[];
@@ -44,6 +46,9 @@ export default function CreditsActiveTable({ data }: Props) {
 	const [creditToDelete, setCreditToDelete] = useState<number | null>(null);
 	const [openPaymentModal, setOpenPaymentModal] = useState(false);
 	const [creditToPay, setCreditToPay] = useState<Credit | null>(null);
+	const [paymentType, setPaymentType] = useState("CAPITAL");
+	const [openViewPaymentsModal, setOpenViewPaymentsModal] = useState(false);
+	const [creditToViewPayments, setCreditToViewPayments] = useState<Credit | null>(null);
 
 	const columns: ColumnDef<Credit>[] = [
 		{
@@ -141,24 +146,38 @@ export default function CreditsActiveTable({ data }: Props) {
 						<DropdownMenuContent align="end">
 							<DropdownMenuLabel>Acciones</DropdownMenuLabel>
 							<DropdownMenuItem
-								onClick={() => onPayCredit(credit)}
+								onClick={() => onViewPayments(credit)}
+								className="cursor-pointer text-gray-700"
+							>
+								<History className="mr-2 h-4 w-4" />
+								Ver pagos
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => onPayCredit(credit, "CAPITAL")}
 								className="cursor-pointer text-green-700"
 							>
-								<CircleDollarSign />
-								Abonar
+								<CircleDollarSign className="mr-2 h-4 w-4" />
+								Abonar a capital
 							</DropdownMenuItem>
+							{/* <DropdownMenuItem
+								onClick={() => onPayCredit(credit, "INTEREST")}
+								className="cursor-pointer text-emerald-600"
+							>
+								<CircleDollarSign className="mr-2 h-4 w-4" />
+								Abonar interés
+							</DropdownMenuItem> */}
 							<DropdownMenuItem
 								onClick={() => onEditCredit(credit.id)}
 								className="text-blue-600 cursor-pointer"
 							>
-								<Pencil />
+								<Pencil className="mr-2 h-4 w-4" />
 								Editar
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => onDeleteCredit(credit.id)}
 								className="text-red-500 cursor-pointer"
 							>
-								<Trash />
+								<Trash className="mr-2 h-4 w-4" />
 								Borrar
 							</DropdownMenuItem>
 						</DropdownMenuContent>
@@ -182,9 +201,15 @@ export default function CreditsActiveTable({ data }: Props) {
 		setOpenDeleteCreditModal(true);
 	};
 
-	const onPayCredit = async (credit: Credit) => {
+	const onPayCredit = async (credit: Credit, type: "CAPITAL" | "INTEREST") => {
 		setCreditToPay(credit);
 		setOpenPaymentModal(true);
+		setPaymentType(type);
+	};
+
+	const onViewPayments = (credit: Credit) => {
+		setCreditToViewPayments(credit);
+		setOpenViewPaymentsModal(true);
 	};
 
 	useEffect(() => {
@@ -204,6 +229,12 @@ export default function CreditsActiveTable({ data }: Props) {
 			setCreditToPay(null);
 		}
 	}, [openPaymentModal]);
+
+	useEffect(() => {
+		if (!openViewPaymentsModal) {
+			setCreditToViewPayments(null);
+		}
+	}, [openViewPaymentsModal]);
 
 	const table = useReactTable({
 		data,
@@ -277,11 +308,25 @@ export default function CreditsActiveTable({ data }: Props) {
 				/>
 			)}
 
-			{creditToPay && (
+			{creditToPay && paymentType === "CAPITAL" && (
 				<PaymentModal
 					isOpen={openPaymentModal}
 					setIsOpen={setOpenPaymentModal}
 					credit={creditToPay}
+				/>
+			)}
+			{/* {creditToPay && paymentType === "INTEREST" && (
+				<PaymentInterestModal
+					isOpen={openPaymentModal}
+					setIsOpen={setOpenPaymentModal}
+					credit={creditToPay}
+				/>
+			)} */}
+			{creditToViewPayments && (
+				<ViewPaymentsModal
+					isOpen={openViewPaymentsModal}
+					setIsOpen={setOpenViewPaymentsModal}
+					credit={creditToViewPayments}
 				/>
 			)}
 		</div>
