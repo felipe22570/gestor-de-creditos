@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/db";
-import { credits } from "@/db/schema";
+import { credits, payments } from "@/db/schema";
 import { CreditRequest } from "@/types/credit";
 import { eq, and, isNotNull, sql } from "drizzle-orm";
 
@@ -59,7 +59,12 @@ export async function editCredit(creditId: number, credit: CreditRequest | Parti
 }
 
 export async function deleteCredit(creditId: number) {
+	console.log("creditId", creditId);
 	try {
+		// First delete all related payments
+		await db.delete(payments).where(eq(payments.creditId, creditId));
+
+		// Then delete the credit
 		await db.delete(credits).where(eq(credits.id, creditId));
 
 		return "Credit deleted successfully";

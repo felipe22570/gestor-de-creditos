@@ -30,8 +30,9 @@ import { CircleDollarSign, History, MoreHorizontal, Pencil, Trash } from "lucide
 import { fetchCreditById } from "@/lib/actions/credit";
 import DeleteCreditModal from "@/components/modals/delete-credit";
 import PaymentModal from "@/components/modals/payment";
-// import PaymentInterestModal from "@/components/modals/payment-interest";
 import ViewPaymentsModal from "@/components/modals/view-payments";
+import PaymentInterestModal from "@/components/modals/payment-interest";
+import { cn } from "@/lib/utils";
 
 interface Props {
 	data: Credit[];
@@ -119,15 +120,68 @@ export default function CreditsActiveTable({ data }: Props) {
 			},
 		},
 		{
-			accessorKey: "totalAmount",
-			header: "Monto Total",
+			accessorKey: "interestAmount",
+			header: "Monto de Interés",
 			cell: ({ row }) => {
+				const amount = row.getValue("interestAmount")
+					? Number(row.getValue("interestAmount"))
+					: 0;
+
 				const formatted = new Intl.NumberFormat("es-CO", {
 					style: "currency",
 					currency: "COP",
-				}).format(row.getValue("totalAmount"));
+				}).format(amount);
+
+				return <span className="text-sm font-medium">{amount ? formatted : ""}</span>;
+			},
+		},
+		{
+			accessorKey: "totalAmount",
+			header: "Monto Total",
+			cell: ({ row }) => {
+				const totalAmount = Number(row.getValue("totalAmount")) ?? 0;
+				const interestAmount = row.getValue("interestAmount")
+					? Number(row.getValue("interestAmount"))
+					: 0;
+
+				const total = interestAmount ? totalAmount + interestAmount : totalAmount;
+
+				const formatted = new Intl.NumberFormat("es-CO", {
+					style: "currency",
+					currency: "COP",
+				}).format(total);
 
 				return <span className="text-sm font-medium">{formatted}</span>;
+			},
+		},
+		{
+			accessorKey: "nextPaymentDate",
+			header: "Próximo Pago",
+			cell: ({ row }) => {
+				const nextPaymentDate = row.getValue("nextPaymentDate");
+
+				if (!nextPaymentDate) {
+					return <span className="text-sm font-medium">No establecido</span>;
+				}
+
+				const paymentDate = new Date(nextPaymentDate as string | number);
+				const currentDate = new Date();
+
+				// Remove time part for date comparison
+				currentDate.setHours(0, 0, 0, 0);
+
+				const isOverdue = paymentDate < currentDate;
+
+				return (
+					<span
+						className={cn(
+							"text-sm font-bold",
+							isOverdue ? "text-red-600" : "text-green-600"
+						)}
+					>
+						{format(paymentDate, "dd/MM/yyyy")}
+					</span>
+				);
 			},
 		},
 		{
@@ -159,13 +213,15 @@ export default function CreditsActiveTable({ data }: Props) {
 								<CircleDollarSign className="mr-2 h-4 w-4" />
 								Abonar a capital
 							</DropdownMenuItem>
-							{/* <DropdownMenuItem
-								onClick={() => onPayCredit(credit, "INTEREST")}
-								className="cursor-pointer text-emerald-600"
-							>
-								<CircleDollarSign className="mr-2 h-4 w-4" />
-								Abonar interés
-							</DropdownMenuItem> */}
+							{credit.interestAmount && Number(credit.interestAmount) > 0 && (
+								<DropdownMenuItem
+									onClick={() => onPayCredit(credit, "INTEREST")}
+									className="cursor-pointer text-emerald-600"
+								>
+									<CircleDollarSign className="mr-2 h-4 w-4" />
+									Abonar interés
+								</DropdownMenuItem>
+							)}
 							<DropdownMenuItem
 								onClick={() => onEditCredit(credit.id)}
 								className="text-blue-600 cursor-pointer"
@@ -315,13 +371,13 @@ export default function CreditsActiveTable({ data }: Props) {
 					credit={creditToPay}
 				/>
 			)}
-			{/* {creditToPay && paymentType === "INTEREST" && (
+			{creditToPay && paymentType === "INTEREST" && (
 				<PaymentInterestModal
 					isOpen={openPaymentModal}
 					setIsOpen={setOpenPaymentModal}
 					credit={creditToPay}
 				/>
-			)} */}
+			)}
 			{creditToViewPayments && (
 				<ViewPaymentsModal
 					isOpen={openViewPaymentsModal}

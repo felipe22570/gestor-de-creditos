@@ -15,6 +15,11 @@ interface Props {
 	credit: Credit | null;
 }
 
+const paymentTypes = {
+	CAPITAL: "Capital",
+	INTEREST: "Interés",
+};
+
 export default function ViewPaymentsModal({ isOpen, setIsOpen, credit }: Props) {
 	const [payments, setPayments] = useState<Payment[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
@@ -73,10 +78,10 @@ export default function ViewPaymentsModal({ isOpen, setIsOpen, credit }: Props) 
 							) : (
 								<>
 									{payments.map((payment) => (
-										<TableRow key={`${payment.id}-${payment.paymentDate}`}>
+										<TableRow key={`${payment.id}-${payment.startDate}`}>
 											<TableCell>
 												{format(
-													payment.paymentDate ?? new Date(),
+													payment.startDate ?? new Date(),
 													"dd/MM/yyyy"
 												)}
 											</TableCell>
@@ -85,6 +90,11 @@ export default function ViewPaymentsModal({ isOpen, setIsOpen, credit }: Props) 
 											</TableCell>
 											<TableCell>{payment.clientName}</TableCell>
 											<TableCell>{payment.clientId}</TableCell>
+											<TableCell>
+												{paymentTypes[
+													payment.paymentType as keyof typeof paymentTypes
+												] ?? "Capital"}
+											</TableCell>
 										</TableRow>
 									))}
 									{payments.length === 0 && (

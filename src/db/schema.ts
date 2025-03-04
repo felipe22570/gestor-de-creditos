@@ -21,6 +21,7 @@ export const credits = sqliteTable("credits", {
 	productName: text("product_name").notNull(),
 	initialAmount: integer("initial_amount").notNull(),
 	interestRate: integer("interest_rate").notNull(),
+	interestAmount: integer("interest_amount"),
 	totalAmount: integer("total_amount").notNull(),
 	startDate: integer("start_date", { mode: "timestamp" }).default(sql`(strftime('%s','now'))`),
 	modifiedDate: integer("modified_date", { mode: "timestamp" }).default(sql`(strftime('%s','now'))`),
@@ -39,6 +40,7 @@ export const payments = sqliteTable("payments", {
 	creditName: text("credit_name").default(sql`""`),
 	clientId: integer("client_id"),
 	clientName: text("client_name"),
-	paymentDate: integer("start_date", { mode: "timestamp" }),
+	startDate: integer("start_date", { mode: "timestamp" }),
+	paymentType: text("payment_type"),
 	amountPaid: integer("amount_paid"),
 });

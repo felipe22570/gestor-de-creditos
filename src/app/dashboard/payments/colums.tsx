@@ -27,10 +27,10 @@ export const columns: ColumnDef<Payment>[] = [
 		enableHiding: false,
 	},
 	{
-		accessorKey: "paymentDate",
+		accessorKey: "startDate",
 		header: "Fecha de pago",
 		cell: ({ row }) => {
-			const date = format(new Date(row.getValue("paymentDate")), "dd/MM/yyyy");
+			const date = format(new Date(row.getValue("startDate")), "dd/MM/yyyy");
 
 			return <span className="w-3 text-sm font-medium">{date}</span>;
 		},
@@ -58,6 +58,23 @@ export const columns: ColumnDef<Payment>[] = [
 			}).format(row.getValue("amountPaid"));
 
 			return <span className="text-sm font-medium">{formatted}</span>;
+		},
+	},
+	{
+		accessorKey: "paymentType",
+		header: "Tipo de pago",
+		cell: ({ row }) => {
+			const paymentType = row.getValue("paymentType");
+			const paymentTypes = {
+				CAPITAL: "Capital",
+				INTEREST: "Interés",
+			};
+
+			return (
+				<span className="text-sm font-medium">
+					{paymentTypes[paymentType as keyof typeof paymentTypes] ?? "Capital"}
+				</span>
+			);
 		},
 	},
 ];

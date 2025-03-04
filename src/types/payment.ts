@@ -4,6 +4,7 @@ export interface PaymentRequest {
 	creditId: number;
 	creditName: string;
 	amountPaid: number;
-	paymentDate: Date;
+	startDate: Date;
 	clientName: string;
+	paymentType: "CAPITAL" | "INTEREST";
 }

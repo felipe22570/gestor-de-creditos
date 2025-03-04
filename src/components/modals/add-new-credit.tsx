@@ -80,7 +80,8 @@ export default function AddNewCreditModal() {
 			productName: formData.productName,
 			initialAmount: Number(formData.value),
 			interestRate: Number(formData.interestRate),
-			totalAmount: totalAmount,
+			interestAmount: (Number(formData.value) * Number(formData.interestRate)) / 100,
+			totalAmount: Number(formData.value),
 			numPayments: 0,
 			nextPaymentDate: add(creditDate ?? new Date(), { months: 1 }),
 		};

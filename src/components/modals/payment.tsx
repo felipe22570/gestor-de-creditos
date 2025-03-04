@@ -8,7 +8,7 @@ import { Input } from "../ui/input";
 import { formatCOP } from "@/lib/utils";
 import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
-import { createPayment } from "@/lib/actions/payment";
+import { createCapitalPayment } from "@/lib/actions/payment";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -39,15 +39,14 @@ export default function PaymentModal({ isOpen, setIsOpen, credit }: Props) {
 	};
 
 	const onAddPayment = async () => {
-		const interestValue = (Number(totalResidual) * Number(credit?.interestRate)) / 100;
-		let totalValue = totalResidual;
+		let interestValue = 0;
 
 		if (addInterest) {
-			totalValue = Number(totalResidual) + interestValue;
+			interestValue = (Number(totalResidual) * Number(credit?.interestRate)) / 100;
 		}
 
 		try {
-			await createPayment(credit as Credit, Number(totalValue));
+			await createCapitalPayment(credit as Credit, Number(amount), Number(interestValue));
 
 			toast({
 				title: "Abono realizado exitosamente!",
