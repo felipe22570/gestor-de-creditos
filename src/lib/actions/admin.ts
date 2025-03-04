@@ -32,9 +32,11 @@ export async function login({ email, password }: { email: string; password: stri
 		await signIn("credentials", {
 			email,
 			password,
+			redirect: false,
 		});
 	} catch (error) {
 		console.error(error);
+		throw error;
 	}
 }
 

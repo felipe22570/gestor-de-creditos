@@ -3,7 +3,7 @@
 import db from "@/db";
 import { credits } from "@/db/schema";
 import { CreditRequest } from "@/types/credit";
-import { eq } from "drizzle-orm";
+import { eq, and, isNotNull, sql } from "drizzle-orm";
 
 export async function fetchCredits(adminId: number) {
 	try {
@@ -67,5 +67,29 @@ export async function deleteCredit(creditId: number) {
 		console.error(error);
 
 		return null;
+	}
+}
+
+export async function fetchCreditsDue(adminId: number) {
+	try {
+		const currentDate = new Date();
+		const currentTimestamp = Math.floor(currentDate.getTime() / 1000);
+
+		const results = await db
+			.select()
+			.from(credits)
+			.where(
+				and(
+					eq(credits.adminId, adminId),
+					isNotNull(credits.nextPaymentDate),
+					sql`${credits.nextPaymentDate} < ${currentTimestamp}`
+				)
+			);
+
+		return results;
+	} catch (error) {
+		console.error(error);
+
+		return [];
 	}
 }
