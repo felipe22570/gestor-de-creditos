@@ -2,6 +2,91 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Payment } from "@/types/schema";
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { deletePayment } from "@/lib/actions/payment";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+
+// Create a separate component for the delete action
+function DeletePaymentButton({ paymentId }: { paymentId: number }) {
+	const [isDeleting, setIsDeleting] = useState(false);
+	const { toast } = useToast();
+
+	const handleDelete = async () => {
+		setIsDeleting(true);
+		try {
+			const result = await deletePayment(paymentId);
+
+			if (result.success) {
+				toast({
+					title: "Pago eliminado",
+					description: "El pago ha sido eliminado exitosamente.",
+					variant: "default",
+				});
+				// Refresh the page to update the table
+				window.location.reload();
+			} else {
+				toast({
+					title: "Error",
+					description: result.message || "No se pudo eliminar el pago.",
+					variant: "destructive",
+				});
+			}
+		} catch (error: unknown) {
+			toast({
+				title: "Error",
+				description: "Ocurrió un error al eliminar el pago.",
+				variant: "destructive",
+			});
+			console.error(error);
+		} finally {
+			setIsDeleting(false);
+		}
+	};
+
+	return (
+		<AlertDialog>
+			<AlertDialogTrigger asChild>
+				<Button variant="ghost" size="icon" className="h-8 w-8">
+					<Trash2 className="h-4 w-4 text-destructive" />
+				</Button>
+			</AlertDialogTrigger>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+					<AlertDialogDescription>
+						Esta acción eliminará el pago y es irreversible. Si es un pago de capital, se
+						restaurará el monto correspondiente al crédito.
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel>Cancelar</AlertDialogCancel>
+					<AlertDialogAction
+						onClick={(e) => {
+							e.preventDefault();
+							handleDelete();
+						}}
+						disabled={isDeleting}
+					>
+						{isDeleting ? "Eliminando..." : "Eliminar pago"}
+					</AlertDialogAction>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
+	);
+}
 
 export const columns: ColumnDef<Payment>[] = [
 	{
@@ -75,6 +160,14 @@ export const columns: ColumnDef<Payment>[] = [
 					{paymentTypes[paymentType as keyof typeof paymentTypes] ?? "Capital"}
 				</span>
 			);
+		},
+	},
+	{
+		id: "actions",
+		header: "Acciones",
+		cell: ({ row }) => {
+			const payment = row.original;
+			return <DeletePaymentButton paymentId={payment.id} />;
 		},
 	},
 ];

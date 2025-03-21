@@ -100,3 +100,42 @@ export async function createInterestPayment(credit: Credit, amount: number, addN
 		return null;
 	}
 }
+
+export async function deletePayment(paymentId: number) {
+	try {
+		// First fetch the payment to know its details
+		const payment = await db.select().from(payments).where(eq(payments.id, paymentId)).get();
+
+		if (!payment) {
+			return { success: false, message: "Payment not found" };
+		}
+
+		// Delete the payment
+		await db.delete(payments).where(eq(payments.id, paymentId));
+
+		// If it's a capital payment, we need to update the credit amount
+		if (payment.paymentType === "CAPITAL" && payment.amountPaid !== null) {
+			// Get the credit
+			const credit = await db.select().from(credits).where(eq(credits.id, payment.creditId)).get();
+
+			if (credit) {
+				// Add back the amount to the total
+				const updatedTotalAmount = credit.totalAmount + payment.amountPaid;
+
+				// Update the credit
+				await db
+					.update(credits)
+					.set({
+						totalAmount: updatedTotalAmount,
+						modifiedDate: new Date(),
+					})
+					.where(eq(credits.id, payment.creditId));
+			}
+		}
+
+		return { success: true, message: "Payment deleted successfully" };
+	} catch (error) {
+		console.error("Error deleting payment:", error);
+		return { success: false, message: "Failed to delete payment" };
+	}
+}
