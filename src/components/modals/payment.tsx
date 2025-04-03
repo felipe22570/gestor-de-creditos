@@ -6,7 +6,6 @@ import { Label } from "../ui/label";
 import { useState } from "react";
 import { Input } from "../ui/input";
 import { formatCOP } from "@/lib/utils";
-import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
 import { createCapitalPayment } from "@/lib/actions/payment";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +23,6 @@ export default function PaymentModal({ isOpen, setIsOpen, credit }: Props) {
 
 	const [amount, setAmount] = useState<number | string>("");
 	const [totalResidual, setTotalResidual] = useState<number>(credit?.totalAmount as number);
-	const [addInterest, setAddInterest] = useState<boolean>(false);
 
 	const onChangeAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setAmount(Number(e.target.value));
@@ -34,19 +32,9 @@ export default function PaymentModal({ isOpen, setIsOpen, credit }: Props) {
 		}
 	};
 
-	const onAddInterest = (value: boolean) => {
-		setAddInterest(value);
-	};
-
 	const onAddPayment = async () => {
-		let interestValue = 0;
-
-		if (addInterest) {
-			interestValue = (Number(totalResidual) * Number(credit?.interestRate)) / 100;
-		}
-
 		try {
-			await createCapitalPayment(credit as Credit, Number(amount), Number(interestValue));
+			await createCapitalPayment(credit as Credit, Number(amount));
 
 			toast({
 				title: "Abono realizado exitosamente!",
@@ -86,24 +74,8 @@ export default function PaymentModal({ isOpen, setIsOpen, credit }: Props) {
 						/>
 					</div>
 
-					<div className="flex items-center space-x-2 mt-4 mb-7">
-						<Checkbox id="interest" checked={addInterest} onCheckedChange={onAddInterest} />
-						<label
-							htmlFor="interest"
-							className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-						>
-							Aplicar porcentaje de interés ({credit?.interestRate}%)
-						</label>
-					</div>
-
 					<span className="text-sm font-medium text-gray-500">
-						Total residual:{" "}
-						{addInterest
-							? formatCOP(
-									Number(totalResidual) +
-										(Number(totalResidual) * Number(credit?.interestRate)) / 100
-							  )
-							: formatCOP(totalResidual)}
+						Total residual: {formatCOP(totalResidual)}
 					</span>
 				</div>
 				<DialogFooter>

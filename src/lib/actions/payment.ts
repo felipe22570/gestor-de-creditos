@@ -29,7 +29,7 @@ export async function fetchPaymentsByCreditId(creditId: number) {
 	}
 }
 
-export async function createCapitalPayment(credit: Credit, amount: number, interestAmount: number) {
+export async function createCapitalPayment(credit: Credit, amount: number) {
 	const paymentData: PaymentRequest = {
 		adminId: credit.adminId,
 		clientId: credit.clientCardId,
@@ -52,7 +52,6 @@ export async function createCapitalPayment(credit: Credit, amount: number, inter
 			.set({
 				nextPaymentDate,
 				totalAmount: totalResidual,
-				interestAmount: interestAmount,
 				modifiedDate: new Date(),
 			})
 			.where(eq(credits.id, credit.id));
@@ -92,6 +91,38 @@ export async function createInterestPayment(credit: Credit, amount: number, addN
 		};
 
 		await db.update(credits).set(finalUpdateData).where(eq(credits.id, credit.id));
+
+		return "Payment created successfully";
+	} catch (error) {
+		console.error(error);
+
+		return null;
+	}
+}
+
+export async function createFullPayment(credit: Credit) {
+	const paymentData: PaymentRequest = {
+		adminId: credit.adminId,
+		clientId: credit.clientCardId,
+		creditId: credit.id,
+		creditName: credit.productName,
+		amountPaid: credit.totalAmount,
+		startDate: new Date(),
+		clientName: credit.clientName,
+		paymentType: "CAPITAL",
+	};
+
+	try {
+		await db.insert(payments).values(paymentData);
+		await db
+			.update(credits)
+			.set({
+				nextPaymentDate: null,
+				totalAmount: 0,
+				interestAmount: 0,
+				modifiedDate: new Date(),
+			})
+			.where(eq(credits.id, credit.id));
 
 		return "Payment created successfully";
 	} catch (error) {

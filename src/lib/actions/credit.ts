@@ -3,11 +3,14 @@
 import db from "@/db";
 import { credits, payments } from "@/db/schema";
 import { CreditRequest } from "@/types/credit";
-import { eq, and, isNotNull, sql } from "drizzle-orm";
+import { eq, and, isNotNull, sql, isNull, not } from "drizzle-orm";
 
-export async function fetchCredits(adminId: number) {
+export async function fetchActiveCredits(adminId: number) {
 	try {
-		const results = await db.select().from(credits).where(eq(credits.adminId, adminId));
+		const results = await db
+			.select()
+			.from(credits)
+			.where(and(eq(credits.adminId, adminId), not(isNull(credits.nextPaymentDate))));
 
 		return results;
 	} catch (error) {
@@ -88,6 +91,27 @@ export async function fetchCreditsDue(adminId: number) {
 					eq(credits.adminId, adminId),
 					isNotNull(credits.nextPaymentDate),
 					sql`${credits.nextPaymentDate} < ${currentTimestamp}`
+				)
+			);
+
+		return results;
+	} catch (error) {
+		console.error(error);
+
+		return [];
+	}
+}
+
+export async function fetchCompletedCredits(adminId: number) {
+	try {
+		const results = await db
+			.select()
+			.from(credits)
+			.where(
+				and(
+					eq(credits.adminId, adminId),
+					isNull(credits.nextPaymentDate),
+					eq(credits.totalAmount, 0)
 				)
 			);
 

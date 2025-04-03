@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import db from "@/db";
 import { credits } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, isNull, not } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 // Vercel secret token to verify requests
@@ -38,7 +38,10 @@ export async function GET() {
 		const currentDate = new Date();
 
 		// Get all active credits
-		const activeCredits = await db.select().from(credits);
+		const activeCredits = await db
+			.select()
+			.from(credits)
+			.where(not(isNull(credits.nextPaymentDate)));
 
 		let updatedCredits = 0;
 

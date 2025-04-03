@@ -1,11 +1,11 @@
 import { auth } from "@/auth.config";
-import { fetchCredits } from "@/lib/actions/credit";
+import { fetchActiveCredits } from "@/lib/actions/credit";
 import CreditsActiveTable from "./table";
 import AddNewCreditModal from "@/components/modals/add-new-credit";
 
 export default async function CreditsActivePage() {
 	const session = await auth();
-	const credits = await fetchCredits(session?.user?.id as unknown as number);
+	const credits = await fetchActiveCredits(session?.user?.id as unknown as number);
 
 	return (
 		<div className="w-100">

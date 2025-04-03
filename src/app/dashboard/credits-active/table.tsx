@@ -32,6 +32,7 @@ import DeleteCreditModal from "@/components/modals/delete-credit";
 import PaymentModal from "@/components/modals/payment";
 import ViewPaymentsModal from "@/components/modals/view-payments";
 import PaymentInterestModal from "@/components/modals/payment-interest";
+import PaymentFullModal from "@/components/modals/payment-full";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -50,6 +51,8 @@ export default function CreditsActiveTable({ data }: Props) {
 	const [paymentType, setPaymentType] = useState("CAPITAL");
 	const [openViewPaymentsModal, setOpenViewPaymentsModal] = useState(false);
 	const [creditToViewPayments, setCreditToViewPayments] = useState<Credit | null>(null);
+	const [openPaymentFullModal, setOpenPaymentFullModal] = useState(false);
+	const [creditToPayFull, setCreditToPayFull] = useState<Credit | null>(null);
 
 	const columns: ColumnDef<Credit>[] = [
 		{
@@ -223,6 +226,13 @@ export default function CreditsActiveTable({ data }: Props) {
 								</DropdownMenuItem>
 							)}
 							<DropdownMenuItem
+								onClick={() => onPayFull(credit)}
+								className="cursor-pointer text-green-800"
+							>
+								<CircleDollarSign className="mr-2 h-4 w-4" />
+								Pagar completo
+							</DropdownMenuItem>
+							<DropdownMenuItem
 								onClick={() => onEditCredit(credit.id)}
 								className="text-blue-600 cursor-pointer"
 							>
@@ -268,6 +278,11 @@ export default function CreditsActiveTable({ data }: Props) {
 		setOpenViewPaymentsModal(true);
 	};
 
+	const onPayFull = (credit: Credit) => {
+		setCreditToPayFull(credit);
+		setOpenPaymentFullModal(true);
+	};
+
 	useEffect(() => {
 		if (!openEditCreditModal) {
 			setCreditToEdit(null);
@@ -291,6 +306,12 @@ export default function CreditsActiveTable({ data }: Props) {
 			setCreditToViewPayments(null);
 		}
 	}, [openViewPaymentsModal]);
+
+	useEffect(() => {
+		if (!openPaymentFullModal) {
+			setCreditToPayFull(null);
+		}
+	}, [openPaymentFullModal]);
 
 	const table = useReactTable({
 		data,
@@ -383,6 +404,13 @@ export default function CreditsActiveTable({ data }: Props) {
 					isOpen={openViewPaymentsModal}
 					setIsOpen={setOpenViewPaymentsModal}
 					credit={creditToViewPayments}
+				/>
+			)}
+			{creditToPayFull && (
+				<PaymentFullModal
+					isOpen={openPaymentFullModal}
+					setIsOpen={setOpenPaymentFullModal}
+					credit={creditToPayFull}
 				/>
 			)}
 		</div>

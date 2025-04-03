@@ -2,6 +2,7 @@ import CautionIcon from "@/components/icons/caution";
 import CheckListIcon from "@/components/icons/check-list";
 import CoinIcon from "@/components/icons/coin";
 import HomeIcon from "@/components/icons/home";
+import { CheckCircleIcon } from "lucide-react";
 import Link from "next/link";
 
 const options = [
@@ -19,6 +20,11 @@ const options = [
 		name: "Créditos Vencidos",
 		href: "/dashboard/credits-due",
 		icon: <CautionIcon className="w-5 h-5 text-red-500" />,
+	},
+	{
+		name: "Créditos Completados",
+		href: "/dashboard/credits-completed",
+		icon: <CheckCircleIcon className="w-5 h-5 text-blue-500" />,
 	},
 	{
 		name: "Abonos",
