@@ -8,8 +8,10 @@ import {
 	getCoreRowModel,
 	getFilteredRowModel,
 	getPaginationRowModel,
+	getSortedRowModel,
 	useReactTable,
 	VisibilityState,
+	SortingState,
 } from "@tanstack/react-table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import {
@@ -38,6 +40,7 @@ interface Props {
 export default function CreditsDueTable({ data }: Props) {
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [globalFilter, setGlobalFilter] = useState<unknown>([]);
+	const [sorting, setSorting] = useState<SortingState>([]);
 	const [openEditCreditModal, setOpenEditCreditModal] = useState(false);
 	const [openDeleteCreditModal, setOpenDeleteCreditModal] = useState(false);
 	const [creditToEdit, setCreditToEdit] = useState<Credit | null>(null);
@@ -72,7 +75,22 @@ export default function CreditsDueTable({ data }: Props) {
 		},
 		{
 			accessorKey: "startDate",
-			header: "Fecha",
+			header: ({ column }) => {
+				return (
+					<Button
+						variant="ghost"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+						className="flex items-center gap-1"
+					>
+						Fecha
+						{column.getIsSorted() === "asc"
+							? " ↑"
+							: column.getIsSorted() === "desc"
+							? " ↓"
+							: ""}
+					</Button>
+				);
+			},
 			cell: ({ row }) => {
 				const date = format(new Date(row.getValue("startDate")), "dd/MM/yyyy");
 
@@ -247,10 +265,13 @@ export default function CreditsDueTable({ data }: Props) {
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
+		getSortedRowModel: getSortedRowModel(),
 		onColumnVisibilityChange: setColumnVisibility,
+		onSortingChange: setSorting,
 		state: {
 			columnVisibility,
 			globalFilter,
+			sorting,
 		},
 		onGlobalFilterChange: setGlobalFilter,
 	});

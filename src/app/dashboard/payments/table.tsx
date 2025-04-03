@@ -7,8 +7,10 @@ import {
 	getCoreRowModel,
 	getFilteredRowModel,
 	getPaginationRowModel,
+	getSortedRowModel,
 	useReactTable,
 	VisibilityState,
+	SortingState,
 } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -28,6 +30,7 @@ interface Props {
 export default function PaymentsTable({ data }: Props) {
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [globalFilter, setGlobalFilter] = useState<unknown>([]);
+	const [sorting, setSorting] = useState<SortingState>([]);
 
 	const table = useReactTable({
 		columns,
@@ -35,10 +38,13 @@ export default function PaymentsTable({ data }: Props) {
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
+		getSortedRowModel: getSortedRowModel(),
 		onColumnVisibilityChange: setColumnVisibility,
+		onSortingChange: setSorting,
 		state: {
 			columnVisibility,
 			globalFilter,
+			sorting,
 		},
 		onGlobalFilterChange: setGlobalFilter,
 	});

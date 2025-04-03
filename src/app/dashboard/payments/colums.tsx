@@ -113,7 +113,18 @@ export const columns: ColumnDef<Payment>[] = [
 	},
 	{
 		accessorKey: "startDate",
-		header: "Fecha de pago",
+		header: ({ column }) => {
+			return (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					className="flex items-center gap-1"
+				>
+					Fecha de pago
+					{column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
+				</Button>
+			);
+		},
 		cell: ({ row }) => {
 			const date = format(new Date(row.getValue("startDate")), "dd/MM/yyyy");
 
