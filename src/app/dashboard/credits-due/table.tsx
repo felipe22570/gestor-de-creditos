@@ -22,7 +22,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import EditCreditModal from "@/components/modals/edit-credit";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -276,6 +276,25 @@ export default function CreditsDueTable({ data }: Props) {
 		onGlobalFilterChange: setGlobalFilter,
 	});
 
+	// Calculate totals for all data
+	const totals = useMemo(() => {
+		const initialAmountTotal = data.reduce((sum, credit) => {
+			return sum + (Number(credit.initialAmount) ?? 0);
+		}, 0);
+
+		const totalAmountTotal = data.reduce((sum, credit) => {
+			const totalAmount = Number(credit.totalAmount) ?? 0;
+			const interestAmount = credit.interestAmount ? Number(credit.interestAmount) : 0;
+			const total = interestAmount ? totalAmount + interestAmount : totalAmount;
+			return sum + total;
+		}, 0);
+
+		return {
+			initialAmount: initialAmountTotal,
+			totalAmount: totalAmountTotal,
+		};
+	}, [data]);
+
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center py-4">
@@ -312,6 +331,33 @@ export default function CreditsDueTable({ data }: Props) {
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
+
+			{/* Summary Section */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-muted/30 rounded-lg border">
+				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
+					<h3 className="text-sm font-medium text-muted-foreground mb-1">
+						Total Monto Inicial
+					</h3>
+					<p className="text-2xl font-bold text-blue-600">
+						{new Intl.NumberFormat("es-CO", {
+							style: "currency",
+							currency: "COP",
+						}).format(totals.initialAmount)}
+					</p>
+				</div>
+				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
+					<h3 className="text-sm font-medium text-muted-foreground mb-1">
+						Total Monto Restante
+					</h3>
+					<p className="text-2xl font-bold text-red-600">
+						{new Intl.NumberFormat("es-CO", {
+							style: "currency",
+							currency: "COP",
+						}).format(totals.totalAmount)}
+					</p>
+				</div>
+			</div>
+
 			<div className="rounded-md border">
 				<DataTable table={table} />
 			</div>

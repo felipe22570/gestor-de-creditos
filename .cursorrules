@@ -1,0 +1,264 @@
+# Cursor Rules for Gestor de Créditos
+
+## Project Overview
+
+This is a Next.js 14 credit management system built with TypeScript, using Drizzle ORM with Turso (SQLite), NextAuth v5, and shadcn/ui components. The application is in Spanish and manages credit operations for a financial business.
+
+## Tech Stack
+
+-    **Framework**: Next.js 14 (App Router)
+-    **Language**: TypeScript (strict mode)
+-    **Styling**: Tailwind CSS with shadcn/ui components
+-    **Database**: Turso (SQLite) with Drizzle ORM
+-    **Authentication**: NextAuth v5 (beta)
+-    **UI Library**: Radix UI primitives via shadcn/ui
+-    **State Management**: React hooks, server actions
+-    **Date Handling**: date-fns
+-    **Tables**: TanStack React Table
+-    **Package Manager**: pnpm
+
+## Code Style & Conventions
+
+### General
+
+-    Use TypeScript with strict type checking
+-    Prefer functional components with hooks
+-    Use server components by default, client components only when necessary
+-    Follow Next.js 14 App Router conventions
+-    Use kebab-case for file and folder names
+-    Use PascalCase for component names
+-    Use camelCase for variables and functions
+
+### File Structure
+
+```
+src/
+├── app/                 # Next.js App Router pages
+├── components/          # Reusable UI components
+│   ├── ui/             # shadcn/ui base components
+│   ├── modals/         # Modal components
+│   ├── dashboard/      # Dashboard-specific components
+│   └── ...
+├── lib/                # Utility functions and configurations
+│   ├── actions/        # Server actions
+│   └── utils.ts        # Utility functions
+├── db/                 # Database schema and configuration
+├── hooks/              # Custom React hooks
+├── types/              # TypeScript type definitions
+└── auth.config.ts      # NextAuth configuration
+```
+
+### Component Patterns
+
+-    Use "use client" directive only when client-side features are needed
+-    Prefer server components for data fetching
+-    Use server actions for form submissions and mutations
+-    Import shadcn/ui components from `@/components/ui/`
+-    Use the `cn()` utility for conditional className merging
+-    Implement proper loading states and error handling
+
+### Database & API
+
+-    Use Drizzle ORM for database operations
+-    Define schemas in `src/db/schema.ts`
+-    Use server actions in `src/lib/actions/` for database operations
+-    Implement proper error handling and validation with Zod
+-    Use transactions for complex operations
+-    Follow the existing pattern for credit management operations
+
+### Authentication
+
+-    Use NextAuth v5 (beta) with the existing configuration
+-    Protect routes using middleware or server-side checks
+-    Access session data via `useSession()` hook or `auth()` function
+-    Store user ID in session for authorization
+
+### Styling Guidelines
+
+-    Use Tailwind CSS utility classes
+-    Follow shadcn/ui design system patterns
+-    Use CSS variables for theming (defined in globals.css)
+-    Implement responsive design with mobile-first approach
+-    Use the existing color palette and spacing system
+-    Prefer composition over custom CSS when possible
+
+### Form Handling
+
+-    Use controlled components with React state
+-    Implement proper form validation
+-    Use server actions for form submissions
+-    Show loading states during submissions
+-    Display success/error messages using the toast system
+-    Clear forms after successful submissions
+
+### Data Fetching & State
+
+-    Use server components for initial data loading
+-    Implement proper loading and error states
+-    Use React hooks for client-side state management
+-    Leverage Next.js caching strategies
+-    Use `router.refresh()` to update server component data
+
+### Error Handling
+
+-    Implement try-catch blocks in server actions
+-    Use toast notifications for user feedback
+-    Log errors to console for debugging
+-    Provide meaningful error messages in Spanish
+-    Handle authentication errors gracefully
+
+### Language & Localization
+
+-    All user-facing text should be in Spanish
+-    Use consistent terminology for financial concepts
+-    Format currency as Colombian Pesos (COP)
+-    Use proper date formatting for the Colombian locale
+-    Maintain consistent naming conventions in Spanish
+
+## Specific Patterns
+
+### Modal Components
+
+-    Use Radix Dialog primitive via shadcn/ui
+-    Implement controlled open/close state
+-    Reset form data when modal closes
+-    Refresh router data after successful operations
+-    Use proper ARIA labels and accessibility
+
+### Table Components
+
+-    Use TanStack React Table for data tables
+-    Implement sorting, filtering, and pagination
+-    Use server-side data fetching when possible
+-    Provide loading skeletons for better UX
+
+### Date Handling
+
+-    Use date-fns for date manipulation
+-    Store dates as Date objects in state
+-    Format dates appropriately for display
+-    Handle timezone considerations for Colombian users
+
+### Credit Management
+
+-    Follow existing patterns for credit operations
+-    Calculate interest properly using the established formulas
+-    Maintain data consistency across related operations
+-    Implement proper validation for financial data
+
+## Dependencies to Prefer
+
+-    Use shadcn/ui components over custom implementations
+-    Prefer Radix UI primitives for complex interactions
+-    Use Lucide React for icons
+-    Use date-fns for date operations
+-    Use Zod for runtime validation
+-    Use clsx and tailwind-merge for className management
+
+## Performance Considerations
+
+-    Use Next.js Image component for images
+-    Implement proper caching strategies
+-    Use React.memo() for expensive components
+-    Optimize database queries with proper indexing
+-    Use streaming and suspense boundaries where appropriate
+
+## Security Best Practices
+
+-    Validate all inputs on both client and server
+-    Use server actions for sensitive operations
+-    Implement proper authentication checks
+-    Sanitize data before database operations
+-    Use environment variables for sensitive configuration
+-    Hash passwords using bcryptjs
+
+## Testing Approach
+
+-    Write unit tests for utility functions
+-    Test server actions with proper mocking
+-    Implement integration tests for critical flows
+-    Use proper TypeScript types for test data
+-    Test accessibility features
+
+## Development Workflow
+
+-    Use pnpm for package management
+-    Run `pnpm dev` for development server
+-    Use `pnpm lint` for code quality checks
+-    Use `pnpm build` to verify production builds
+-    Use Drizzle migrations for schema changes
+
+## Common Patterns to Follow
+
+### Server Action Pattern
+
+```typescript
+"use server";
+
+import { auth } from "@/auth.config";
+import { db } from "@/db";
+import { revalidatePath } from "next/cache";
+
+export async function actionName(data: ActionData) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		throw new Error("No autorizado");
+	}
+
+	try {
+		// Perform database operation
+		const result = await db.insert(table).values(data);
+
+		revalidatePath("/dashboard");
+		return { success: true, data: result };
+	} catch (error) {
+		console.error("Error:", error);
+		throw new Error("Error al procesar la solicitud");
+	}
+}
+```
+
+### Component with Form Pattern
+
+```typescript
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { actionName } from "@/lib/actions/action";
+
+export function ComponentName() {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsLoading(true);
+    try {
+      await actionName(formData);
+      toast({
+        title: "Éxito",
+        description: "Operación completada exitosamente",
+        variant: "success",
+      });
+      router.refresh();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al procesar la solicitud",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    // Component JSX
+  );
+}
+```
+
+Remember to maintain consistency with the existing codebase patterns and always prioritize user experience and data integrity in this financial application.

@@ -23,19 +23,21 @@ import {
 	DropdownMenuItem,
 	DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import EditCreditModal from "@/components/modals/edit-credit";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { CircleDollarSign, History, MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { CircleDollarSign, History, MoreHorizontal, Pencil, Printer, Trash } from "lucide-react";
 import { fetchCreditById } from "@/lib/actions/credit";
 import DeleteCreditModal from "@/components/modals/delete-credit";
 import PaymentModal from "@/components/modals/payment";
 import ViewPaymentsModal from "@/components/modals/view-payments";
 import PaymentInterestModal from "@/components/modals/payment-interest";
 import PaymentFullModal from "@/components/modals/payment-full";
+import PrintInvoiceModal from "@/components/modals/print-invoice-modal";
 import { cn } from "@/lib/utils";
+import { TableRow, TableCell } from "@/components/ui/table";
 
 interface Props {
 	data: Credit[];
@@ -56,6 +58,8 @@ export default function CreditsActiveTable({ data }: Props) {
 	const [creditToViewPayments, setCreditToViewPayments] = useState<Credit | null>(null);
 	const [openPaymentFullModal, setOpenPaymentFullModal] = useState(false);
 	const [creditToPayFull, setCreditToPayFull] = useState<Credit | null>(null);
+	const [openPrintInvoiceModal, setOpenPrintInvoiceModal] = useState(false);
+	const [creditToPrint, setCreditToPrint] = useState<Credit | null>(null);
 
 	const columns: ColumnDef<Credit>[] = [
 		{
@@ -228,6 +232,13 @@ export default function CreditsActiveTable({ data }: Props) {
 								Ver pagos
 							</DropdownMenuItem>
 							<DropdownMenuItem
+								onClick={() => onPrintInvoice(credit)}
+								className="cursor-pointer text-purple-700"
+							>
+								<Printer className="mr-2 h-4 w-4" />
+								Imprimir factura
+							</DropdownMenuItem>
+							<DropdownMenuItem
 								onClick={() => onPayCredit(credit, "CAPITAL")}
 								className="cursor-pointer text-green-700"
 							>
@@ -296,6 +307,11 @@ export default function CreditsActiveTable({ data }: Props) {
 		setOpenViewPaymentsModal(true);
 	};
 
+	const onPrintInvoice = (credit: Credit) => {
+		setCreditToPrint(credit);
+		setOpenPrintInvoiceModal(true);
+	};
+
 	const onPayFull = (credit: Credit) => {
 		setCreditToPayFull(credit);
 		setOpenPaymentFullModal(true);
@@ -348,6 +364,67 @@ export default function CreditsActiveTable({ data }: Props) {
 		onGlobalFilterChange: setGlobalFilter,
 	});
 
+	// Calculate subtotal of total amounts for currently displayed rows
+	const rows = table.getRowModel().rows;
+	const subtotal = useMemo(() => {
+		return rows.reduce((sum, row) => {
+			const credit = row.original;
+			const totalAmount = Number(credit.totalAmount) ?? 0;
+			const interestAmount = credit.interestAmount ? Number(credit.interestAmount) : 0;
+			const total = interestAmount ? totalAmount + interestAmount : totalAmount;
+			return sum + total;
+		}, 0);
+	}, [rows]);
+
+	// Calculate totals for all data (not just filtered)
+	const totals = useMemo(() => {
+		const initialAmountTotal = data.reduce((sum, credit) => {
+			return sum + (Number(credit.initialAmount) ?? 0);
+		}, 0);
+
+		const totalAmountTotal = data.reduce((sum, credit) => {
+			const totalAmount = Number(credit.totalAmount) ?? 0;
+			const interestAmount = credit.interestAmount ? Number(credit.interestAmount) : 0;
+			const total = interestAmount ? totalAmount + interestAmount : totalAmount;
+			return sum + total;
+		}, 0);
+
+		return {
+			initialAmount: initialAmountTotal,
+			totalAmount: totalAmountTotal,
+		};
+	}, [data]);
+
+	// Create footer content
+	const visibleColumns = table.getVisibleLeafColumns();
+	const footerContent = useMemo(() => {
+		const totalAmountColumnIndex = visibleColumns.findIndex((col) => col.id === "totalAmount");
+
+		return (
+			<TableRow className="bg-muted/50 h-12">
+				{visibleColumns.map((column, index) => (
+					<TableCell
+						key={column.id}
+						className={cn("font-semibold", index === 0 ? "text-left px-5" : "")}
+					>
+						{index === 0 ? (
+							<span className="text-sm font-semibold">Subtotal:</span>
+						) : index === totalAmountColumnIndex ? (
+							<span className="text-sm font-semibold">
+								{new Intl.NumberFormat("es-CO", {
+									style: "currency",
+									currency: "COP",
+								}).format(subtotal)}
+							</span>
+						) : (
+							""
+						)}
+					</TableCell>
+				))}
+			</TableRow>
+		);
+	}, [visibleColumns, subtotal]);
+
 	return (
 		<div>
 			<div className="flex justify-between mt-10 mb-5">
@@ -385,8 +462,34 @@ export default function CreditsActiveTable({ data }: Props) {
 				</DropdownMenu>
 			</div>
 
+			{/* Summary Section */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-muted/30 rounded-lg border">
+				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
+					<h3 className="text-sm font-medium text-muted-foreground mb-1">
+						Total Monto Inicial
+					</h3>
+					<p className="text-2xl font-bold text-blue-600">
+						{new Intl.NumberFormat("es-CO", {
+							style: "currency",
+							currency: "COP",
+						}).format(totals.initialAmount)}
+					</p>
+				</div>
+				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
+					<h3 className="text-sm font-medium text-muted-foreground mb-1">
+						Total Monto Restante
+					</h3>
+					<p className="text-2xl font-bold text-green-600">
+						{new Intl.NumberFormat("es-CO", {
+							style: "currency",
+							currency: "COP",
+						}).format(totals.totalAmount)}
+					</p>
+				</div>
+			</div>
+
 			<div className="flex flex-col gap-5">
-				<DataTable table={table} />
+				<DataTable table={table} showFooter={true} footerContent={footerContent} />
 				<DataTablePagination table={table} />
 			</div>
 
@@ -432,6 +535,13 @@ export default function CreditsActiveTable({ data }: Props) {
 					isOpen={openPaymentFullModal}
 					setIsOpen={setOpenPaymentFullModal}
 					credit={creditToPayFull}
+				/>
+			)}
+			{creditToPrint && (
+				<PrintInvoiceModal
+					isOpen={openPrintInvoiceModal}
+					onClose={() => setOpenPrintInvoiceModal(false)}
+					credit={creditToPrint}
 				/>
 			)}
 		</div>

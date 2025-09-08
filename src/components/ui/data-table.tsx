@@ -2,13 +2,23 @@
 
 import { flexRender, Table as ReactTable } from "@tanstack/react-table";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+	TableFooter,
+} from "@/components/ui/table";
 
 interface DataTableProps<TData> {
 	table: ReactTable<TData>;
+	showFooter?: boolean;
+	footerContent?: React.ReactNode;
 }
 
-export function DataTable<TData>({ table }: DataTableProps<TData>) {
+export function DataTable<TData>({ table, showFooter = false, footerContent }: DataTableProps<TData>) {
 	return (
 		<div>
 			<div className="rounded-md border">
@@ -56,6 +66,7 @@ export function DataTable<TData>({ table }: DataTableProps<TData>) {
 							</TableRow>
 						)}
 					</TableBody>
+					{showFooter && footerContent && <TableFooter>{footerContent}</TableFooter>}
 				</Table>
 			</div>
 		</div>
