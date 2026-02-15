@@ -1,0 +1,88 @@
+---
+description: Credit management business logic and payment rules
+alwaysApply: true
+---
+
+# Credit Business Logic
+
+## Payment Types
+
+Three payment types in `src/lib/actions/payment.ts`:
+
+### 1. Capital Payment
+```typescript
+// Reduces principal (totalAmount)
+// Updates nextPaymentDate
+await createCapitalPayment({
+  creditId,
+  amountPaid,
+  adminId,
+});
+```
+
+### 2. Interest Payment
+```typescript
+// Pays down interestAmount only
+// Does NOT modify nextPaymentDate
+// Can add new interest charges
+await createInterestPayment({
+  creditId,
+  amountPaid,
+  newInterest, // Optional
+  adminId,
+});
+```
+
+### 3. Full Payment
+```typescript
+// Pays off entire remaining balance
+// Sets: nextPaymentDate = NULL, totalAmount = 0, interestAmount = 0
+// Marks credit as completed
+await createFullPayment({
+  creditId,
+  adminId,
+});
+```
+
+## Date Handling
+
+**CRITICAL**: Use `getNextPaymentDate()` utility for payment dates.
+
+```typescript
+// ✅ GOOD - Preserves monthly anniversary
+import { getNextPaymentDate } from "@/lib/utils";
+
+const nextDate = getNextPaymentDate(currentDate, startDate);
+
+// Examples:
+// Jan 31 → Feb 28/29 → Mar 31
+// Feb 15 → Mar 15 → Apr 15
+```
+
+**Rules:**
+- Preserves month-end anniversary logic
+- Handles months with different day counts
+- Always use date-fns for date operations
+
+## Interest Calculation
+
+Daily cron job (`/api/cron/calculate-interest`):
+- Adds monthly interest one day after credit anniversary
+- Formula: `Math.floor(totalAmount * (interestRate / 100))`
+- Secured with CRON_SECRET Bearer token
+
+## Currency Formatting
+
+```typescript
+// ✅ GOOD - Always use formatCOP utility
+import { formatCOP } from "@/lib/utils";
+<span>{formatCOP(credit.totalAmount)}</span>
+
+// ❌ BAD - Don't format manually
+<span>${credit.totalAmount}</span>
+```
+
+## Data Validation
+- Validate financial data (amounts, rates)
+- Ensure data consistency across operations
+- Check credit state before mutations

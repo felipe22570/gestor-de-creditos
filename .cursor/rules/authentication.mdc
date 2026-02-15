@@ -1,0 +1,81 @@
+---
+description: NextAuth v5 authentication patterns
+globs: "**/auth*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Authentication Patterns
+
+## NextAuth v5 Configuration
+
+Configuration in `src/auth.config.ts`:
+
+```typescript
+// ✅ GOOD - Session callback enrichment
+callbacks: {
+  async session({ session, token }) {
+    if (token.sub) {
+      // Fetch fresh user data from DB
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, token.sub),
+      });
+      
+      if (user) {
+        session.user = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          // ... other fields
+        };
+      }
+    }
+    return session;
+  },
+}
+```
+
+## Password Handling
+
+```typescript
+// ✅ GOOD - Hash with bcryptjs (10 rounds)
+import bcrypt from "bcryptjs";
+
+const hashedPassword = await bcrypt.hash(password, 10);
+const isValid = await bcrypt.compare(password, hashedPassword);
+```
+
+## Session Access
+
+```typescript
+// ✅ GOOD - Server components/actions
+import { auth } from "@/auth.config";
+const session = await auth();
+
+// ✅ GOOD - Client components
+"use client";
+import { useSession } from "next-auth/react";
+const { data: session } = useSession();
+```
+
+## Type Augmentation
+
+Extend session types in `@types/next-auth.d.ts`:
+
+```typescript
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      phone?: string;
+      balance?: number;
+    };
+  }
+}
+```
+
+## Route Protection
+- Dashboard layout checks session
+- Redirects to `/login` if missing
+- Auth pages redirect to `/dashboard` if authenticated

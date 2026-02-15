@@ -1,0 +1,72 @@
+---
+description: Server actions pattern for database mutations
+globs: "**/actions/*.ts"
+alwaysApply: false
+---
+
+# Server Actions Pattern
+
+All server actions MUST follow this structure:
+
+```typescript
+// ✅ GOOD - Complete server action pattern
+"use server";
+
+import { auth } from "@/auth.config";
+import { db } from "@/db";
+import { revalidatePath } from "next/cache";
+
+export async function actionName(data: ActionData) {
+  // 1. Authentication check
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("No autorizado");
+  }
+
+  try {
+    // 2. Database operation
+    const result = await db.insert(table).values({
+      ...data,
+      adminId: session.user.id,
+    });
+
+    // 3. Revalidate cache
+    revalidatePath("/dashboard");
+    
+    // 4. Return success
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Error:", error);
+    throw new Error("Error al procesar la solicitud");
+  }
+}
+```
+
+## Required Elements
+1. **"use server"** directive at top
+2. **Auth check** - Always verify session
+3. **Try-catch** - Wrap database operations
+4. **Spanish errors** - User-facing messages in Spanish
+5. **revalidatePath** - Clear Next.js cache after mutations
+6. **adminId** - Include user ID from session in records
+
+## Common Mistakes
+
+```typescript
+// ❌ BAD - Missing auth check
+export async function deleteCredit(id: string) {
+  await db.delete(credits).where(eq(credits.id, id));
+}
+
+// ❌ BAD - No error handling
+export async function createPayment(data: PaymentData) {
+  const result = await db.insert(payments).values(data);
+  return result;
+}
+
+// ❌ BAD - English error message
+throw new Error("Unauthorized");
+
+// ✅ GOOD - Spanish error message
+throw new Error("No autorizado");
+```

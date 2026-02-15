@@ -1,0 +1,63 @@
+---
+description: Next.js 14 App Router patterns and conventions
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Next.js Patterns
+
+## Server vs Client Components
+
+```typescript
+// ✅ GOOD - Server component (default)
+export default async function DashboardPage() {
+  const credits = await fetchActiveCredits(userId);
+  return <CreditsTable data={credits} />;
+}
+
+// ✅ GOOD - Client component only when needed
+"use client";
+export function InteractiveModal() {
+  const [open, setOpen] = useState(false);
+  // ... client-side logic
+}
+```
+
+**Rules:**
+- Use server components by default
+- Use "use client" only for interactivity, hooks, or browser APIs
+- Fetch data in server components, not client components
+
+## Data Fetching & Revalidation
+
+```typescript
+// ✅ GOOD - Revalidate after mutations
+"use server";
+import { revalidatePath } from "next/cache";
+
+export async function updateCredit(data: CreditData) {
+  await db.update(credits).set(data);
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// ✅ GOOD - Refresh router after client mutations
+"use client";
+const router = useRouter();
+await actionName(data);
+router.refresh();
+```
+
+## Route Protection
+
+```typescript
+// ✅ GOOD - Check auth in layout/page
+import { auth } from "@/auth.config";
+import { redirect } from "next/navigation";
+
+export default async function DashboardLayout() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+  return <>{children}</>;
+}
+```

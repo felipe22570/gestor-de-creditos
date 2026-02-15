@@ -1,0 +1,66 @@
+---
+description: Drizzle ORM patterns and database operations
+globs: "**/db/*.ts"
+alwaysApply: false
+---
+
+# Database Operations
+
+## Schema Definition
+
+All schemas defined in `src/db/schema.ts` using Drizzle ORM.
+
+```typescript
+// ✅ GOOD - Schema with proper types
+export const credits = sqliteTable("credits", {
+  id: text("id").notNull().primaryKey(),
+  adminId: text("admin_id").notNull().references(() => users.id),
+  clientName: text("client_name").notNull(),
+  totalAmount: integer("total_amount").notNull(),
+  nextPaymentDate: integer("next_payment_date", { mode: "timestamp" }),
+  startDate: integer("start_date", { mode: "timestamp" }).notNull(),
+});
+```
+
+## Query Patterns
+
+```typescript
+// ✅ GOOD - Filter by adminId for security
+const userCredits = await db
+  .select()
+  .from(credits)
+  .where(eq(credits.adminId, session.user.id));
+
+// ✅ GOOD - Use transactions for complex operations
+await db.transaction(async (tx) => {
+  await tx.insert(payments).values(paymentData);
+  await tx.update(credits).set({ totalAmount: newAmount });
+});
+```
+
+## Important Rules
+
+**Credit Status Logic:**
+- Credits don't have explicit status field
+- Status is **derived from data**:
+  - Active: `nextPaymentDate IS NOT NULL`
+  - Due: `nextPaymentDate < current timestamp`
+  - Completed: `nextPaymentDate IS NULL AND totalAmount = 0`
+
+**Cascade Deletes:**
+- Deleting a credit MUST also delete all associated payments
+- Use transactions for data consistency
+
+```typescript
+// ✅ GOOD - Cascade delete with transaction
+await db.transaction(async (tx) => {
+  await tx.delete(payments).where(eq(payments.creditId, creditId));
+  await tx.delete(credits).where(eq(credits.id, creditId));
+});
+```
+
+## Migrations
+1. Modify `src/db/schema.ts`
+2. Run `pnpm drizzle-kit generate`
+3. Review SQL in `drizzle/migrations/`
+4. Run `pnpm drizzle-kit migrate`

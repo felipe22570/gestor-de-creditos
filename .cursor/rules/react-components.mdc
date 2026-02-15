@@ -1,0 +1,81 @@
+---
+description: React component patterns and form handling
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# React Component Patterns
+
+## Form Components with Server Actions
+
+```typescript
+// ✅ GOOD - Complete form pattern
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+
+export function CreditForm() {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsLoading(true);
+    try {
+      await createCredit(formData);
+      
+      toast({
+        title: "Éxito",
+        description: "Crédito creado exitosamente",
+      });
+      
+      router.refresh(); // Refresh server data
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al crear el crédito",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return <form onSubmit={handleSubmit}>...</form>;
+}
+```
+
+## Modal Patterns
+
+```typescript
+// ✅ GOOD - Controlled modal state
+"use client";
+
+export function EditCreditModal({ credit }: Props) {
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSuccess = async () => {
+    await updateCredit(data);
+    setOpen(false); // Close modal
+    router.refresh(); // Refresh data
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      {/* Reset form when modal closes */}
+    </Dialog>
+  );
+}
+```
+
+## Component Best Practices
+- Use functional components with hooks
+- Implement proper loading states (`isLoading`)
+- Use controlled components with React state
+- Clear forms after successful submissions
+- Import shadcn/ui components from `@/components/ui/`
+- Use `cn()` utility for conditional classNames

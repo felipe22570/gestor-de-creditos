@@ -1,0 +1,55 @@
+---
+description: Core project standards for Gestor de Créditos
+alwaysApply: true
+---
+
+# Project Standards
+
+Credit management system built with Next.js 14, TypeScript, Drizzle ORM (Turso/SQLite), NextAuth v5, and shadcn/ui.
+
+## Tech Stack
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript (strict mode)
+- **Database**: Turso (SQLite) with Drizzle ORM
+- **Auth**: NextAuth v5 (beta)
+- **UI**: shadcn/ui + Radix UI + Tailwind CSS
+- **Package Manager**: pnpm
+
+## Naming Conventions
+- Files/folders: `kebab-case`
+- Components: `PascalCase`
+- Variables/functions: `camelCase`
+- Use TypeScript with strict type checking
+
+## Language & Localization
+- **All user-facing text MUST be in Spanish**
+- Format currency as Colombian Pesos (COP) using `formatCOP()`
+- Use date-fns for date manipulation
+- Consistent Spanish terminology for financial concepts
+
+## File Organization
+```
+src/
+├── app/              # Next.js App Router pages
+├── components/       # Reusable UI components
+│   ├── ui/          # shadcn/ui base components
+│   ├── modals/      # Modal components
+│   └── dashboard/   # Dashboard components
+├── lib/             # Utilities and configurations
+│   └── actions/     # Server actions
+├── db/              # Database schema
+├── hooks/           # Custom React hooks
+└── types/           # TypeScript definitions
+```
+
+## Error Handling
+- Wrap DB operations in try-catch blocks
+- Log errors to console for debugging
+- Provide meaningful Spanish error messages
+- Use toast notifications for user feedback
+
+## Security
+- Validate all inputs on client AND server
+- Use server actions for sensitive operations
+- Hash passwords with bcryptjs (10 rounds)
+- Store secrets in environment variables

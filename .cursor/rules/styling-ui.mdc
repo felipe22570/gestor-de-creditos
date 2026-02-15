@@ -1,0 +1,61 @@
+---
+description: Styling guidelines with Tailwind and shadcn/ui
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# Styling & UI Guidelines
+
+## Tailwind CSS Patterns
+
+```typescript
+// ✅ GOOD - Use utility classes
+<div className="flex items-center justify-between p-4 rounded-lg">
+
+// ✅ GOOD - Use cn() for conditional classes
+import { cn } from "@/lib/utils";
+<div className={cn(
+  "rounded-lg p-4",
+  isActive && "bg-green-100",
+  isDue && "bg-red-100"
+)}>
+
+// ❌ BAD - Avoid custom CSS when possible
+<div style={{ display: "flex", padding: "16px" }}>
+```
+
+## shadcn/ui Components
+
+```typescript
+// ✅ GOOD - Import from @/components/ui
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+
+// ✅ GOOD - Use shadcn/ui over custom implementations
+<Button variant="destructive" size="sm">
+  Eliminar
+</Button>
+```
+
+## Responsive Design
+
+```typescript
+// ✅ GOOD - Mobile-first approach
+<div className="flex flex-col md:flex-row gap-4">
+  <div className="w-full md:w-1/2">...</div>
+</div>
+```
+
+## Component Libraries
+- **UI Base**: shadcn/ui components
+- **Primitives**: Radix UI for accessibility
+- **Icons**: Lucide React
+- **Tables**: TanStack React Table
+- **Dates**: React Day Picker (via shadcn/ui)
+
+## Accessibility
+- Use proper ARIA labels
+- Implement keyboard navigation
+- Ensure color contrast
+- Use semantic HTML elements
