@@ -4,9 +4,8 @@ import db from "@/db";
 import { credits, payments } from "@/db/schema";
 import { PaymentRequest } from "@/types/payment";
 import { Credit } from "@/types/schema";
-import { getNextPaymentDate } from "../utils";
+import { getNextPaymentDate, recalculateNextPaymentDate } from "../utils";
 import { eq, and, or } from "drizzle-orm";
-import { addMonths, endOfMonth, isLastDayOfMonth } from "date-fns";
 
 export async function fetchPayments(adminId: number) {
 	try {
@@ -185,34 +184,6 @@ export async function createFullPayment(credit: Credit) {
 		console.error(error);
 		throw new Error("Error al procesar el pago completo");
 	}
-}
-
-/**
- * Recalculates nextPaymentDate from scratch based on startDate and the
- * number of CAPITAL/INTEREST payments remaining for the credit.
- * Each such payment represents one month advancement from the start date.
- */
-function recalculateNextPaymentDate(startDate: Date, paymentCount: number): Date {
-	const referenceDay = startDate.getDate();
-	const isOriginalLastDay = isLastDayOfMonth(startDate);
-
-	// nextPaymentDate = startDate + (paymentCount + 1) months
-	// +1 because the first nextPaymentDate at credit creation is startDate + 1 month
-	let date = startDate;
-	const totalMonths = paymentCount + 1;
-
-	for (let i = 0; i < totalMonths; i++) {
-		date = addMonths(date, 1);
-		if (isOriginalLastDay) {
-			date = endOfMonth(date);
-		} else {
-			const lastDay = endOfMonth(date).getDate();
-			const targetDay = Math.min(referenceDay, lastDay);
-			date = new Date(date.getFullYear(), date.getMonth(), targetDay);
-		}
-	}
-
-	return date;
 }
 
 export async function deletePayment(paymentId: number) {

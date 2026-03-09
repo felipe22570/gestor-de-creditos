@@ -4,6 +4,7 @@ import db from "@/db";
 import { credits } from "@/db/schema";
 import { eq, isNull, not } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import { isMonthlyAnniversaryPlusOne } from "@/lib/utils";
 
 // Vercel secret token to verify requests
 // You'll need to set this in Vercel's dashboard
@@ -118,47 +119,3 @@ export async function GET() {
 	}
 }
 
-/**
- * Checks if the current date is one day after the monthly anniversary of the start date
- * For example, if start date is January 12, this will return true on February 13, March 13, etc.
- * Handles edge cases for month ends properly:
- * - If start date is Jan 31, will trigger on Mar 1 (Feb 28/29 + 1 day)
- * - If start date is Jan 30, will trigger on Mar 1 (Feb 28/29 + 1 day)
- * - If start date is Jan 29 (non-leap year), will trigger on Mar 1 (Feb 28 + 1 day)
- */
-function isMonthlyAnniversaryPlusOne(startDate: Date, currentDate: Date): boolean {
-	// Don't process if current date is before or same as start date
-	if (currentDate <= startDate) return false;
-
-	const startDay = startDate.getDate();
-	const startMonth = startDate.getMonth();
-	const startYear = startDate.getFullYear();
-
-	const currentDay = currentDate.getDate();
-	const currentMonth = currentDate.getMonth();
-	const currentYear = currentDate.getFullYear();
-
-	// Calculate total months difference
-	const monthsDiff = (currentYear - startYear) * 12 + (currentMonth - startMonth);
-
-	// Must be at least 1 month after start date
-	if (monthsDiff < 1) return false;
-
-	// Calculate what the anniversary date should be in the current month
-	// If start day is 31 but current month only has 30 days, anniversary is on the 30th
-	const lastDayOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-	const anniversaryDay = Math.min(startDay, lastDayOfCurrentMonth);
-
-	// The target day is one day after the anniversary
-	const targetDay = anniversaryDay + 1;
-
-	// Handle month overflow (e.g., anniversary on last day of month, so +1 goes to next month)
-	if (targetDay > lastDayOfCurrentMonth) {
-		// The anniversary was on the last day of the previous month
-		// So if today is the 1st, we're one day after the anniversary
-		return currentDay === 1;
-	}
-
-	// Normal case: check if today matches anniversary + 1 day in the same month
-	return currentDay === targetDay;
-}
