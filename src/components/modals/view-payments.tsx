@@ -32,6 +32,7 @@ interface Props {
 const paymentTypes = {
 	CAPITAL: "Capital",
 	INTEREST: "Interés",
+	FULL: "Pago Completo",
 };
 
 // Component for delete button

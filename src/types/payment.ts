@@ -6,5 +6,5 @@ export interface PaymentRequest {
 	amountPaid: number;
 	startDate: Date;
 	clientName: string;
-	paymentType: "CAPITAL" | "INTEREST";
+	paymentType: "CAPITAL" | "INTEREST" | "FULL";
 }

@@ -5,13 +5,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Credit } from "@/types/schema";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { formatCOP } from "@/lib/utils";
+import { formatCOP, getNextPaymentDate } from "@/lib/utils";
 import { editCredit } from "@/lib/actions/credit";
 import { CreditRequest } from "@/types/credit";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { DatePicker } from "../ui/date-picker";
-import { add } from "date-fns";
 
 interface Props {
 	isOpen: boolean;
@@ -25,7 +24,7 @@ export default function EditCreditModal({ isOpen, setIsOpen, credit }: Props) {
 	const router = useRouter();
 
 	const [formData, setFormData] = useState({
-		clienCardId: credit?.clientCardId || "",
+		clientCardId: credit?.clientCardId || "",
 		clientName: credit?.clientName || "",
 		clientPhone: credit?.clientPhone || "",
 		productName: credit?.productName || "",
@@ -59,22 +58,22 @@ export default function EditCreditModal({ isOpen, setIsOpen, credit }: Props) {
 		e.preventDefault();
 
 		const newCredit: Partial<CreditRequest> = {
-			clientCardId: Number(formData.clienCardId),
+			clientCardId: Number(formData.clientCardId),
 			clientName: formData.clientName,
 			clientPhone: formData.clientPhone,
 			productName: formData.productName,
 			initialAmount: Number(formData.value),
 			interestRate: Number(formData.interestRate),
-			totalAmount: totalAmount,
+			totalAmount: Number(formData.value),
 			startDate: creditDate,
-			nextPaymentDate: add(creditDate as Date, { months: 1 }),
+			nextPaymentDate: creditDate ? getNextPaymentDate(creditDate) : undefined,
 		};
 
 		try {
 			await editCredit(credit?.id as number, newCredit);
 
 			toast({
-				title: "Credito editado exitosamente!",
+				title: "Crédito editado exitosamente!",
 				variant: "success",
 				duration: 1500,
 			});
@@ -82,7 +81,7 @@ export default function EditCreditModal({ isOpen, setIsOpen, credit }: Props) {
 			console.error(error);
 
 			toast({
-				title: "Error al editar el credito",
+				title: "Error al editar el crédito",
 				variant: "destructive",
 				duration: 1500,
 			});
@@ -100,15 +99,15 @@ export default function EditCreditModal({ isOpen, setIsOpen, credit }: Props) {
 				</DialogHeader>
 				<form onSubmit={handleSubmit} className="grid gap-4 py-4">
 					<div className="items-center gap-4">
-						<Label htmlFor="clienCardId" className="text-right">
-							Numero de Cédula
+						<Label htmlFor="clientCardId" className="text-right">
+							Número de Cédula
 						</Label>
 						<Input
-							id="clienCardId"
-							name="clienCardId"
+							id="clientCardId"
+							name="clientCardId"
 							type="number"
 							className="col-span-3"
-							value={formData.clienCardId}
+							value={formData.clientCardId}
 							onChange={handleInputChange}
 						/>
 					</div>

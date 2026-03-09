@@ -164,6 +164,7 @@ export const columns: ColumnDef<Payment>[] = [
 			const paymentTypes = {
 				CAPITAL: "Capital",
 				INTEREST: "Interés",
+				FULL: "Pago Completo",
 			};
 
 			return (

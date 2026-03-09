@@ -31,16 +31,26 @@ export default function PaymentInterestModal({ isOpen, setIsOpen, credit }: Prop
 	const interestAmount = credit?.interestAmount ?? 0;
 
 	const onAddInterest = async () => {
-		await createInterestPayment(credit as Credit, interestAmount, addNewInterest);
+		try {
+			await createInterestPayment(credit as Credit, interestAmount, addNewInterest);
 
-		toast({
-			variant: "success",
-			title: "Interés abonado exitosamente",
-			description: "El interés ha sido abonado correctamente",
-		});
+			toast({
+				variant: "success",
+				title: "Interés abonado exitosamente",
+				description: "El interés ha sido abonado correctamente",
+			});
 
-		setIsOpen(false);
-		router.refresh();
+			setIsOpen(false);
+			router.refresh();
+		} catch (error) {
+			console.error(error);
+
+			toast({
+				variant: "destructive",
+				title: "Error al abonar interés",
+				description: error instanceof Error ? error.message : "Error desconocido",
+			});
+		}
 	};
 
 	const onAddNewInterest = (value: boolean) => {

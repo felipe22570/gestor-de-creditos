@@ -4,6 +4,7 @@ import db from "@/db";
 import { credits, payments } from "@/db/schema";
 import { CreditRequest } from "@/types/credit";
 import { eq, and, isNotNull, sql, isNull, not } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 
 export async function fetchActiveCredits(adminId: number) {
 	try {
@@ -24,11 +25,11 @@ export async function createCredit(credit: CreditRequest) {
 	try {
 		await db.insert(credits).values(credit);
 
+		revalidatePath("/dashboard");
 		return "Credit created successfully";
 	} catch (error) {
-		console.error(error);
-
-		return null;
+		console.error("Error creating credit:", error);
+		throw new Error("Error al crear el crédito");
 	}
 }
 

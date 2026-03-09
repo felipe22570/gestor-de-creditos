@@ -33,8 +33,28 @@ export default function PaymentModal({ isOpen, setIsOpen, credit }: Props) {
 	};
 
 	const onAddPayment = async () => {
+		const numAmount = Number(amount);
+		// Validate input before submitting
+		if (Number.isNaN(numAmount) || numAmount <= 0) {
+			toast({
+				title: "Ingrese un monto válido mayor que cero",
+				variant: "destructive",
+				duration: 2000,
+			});
+			return;
+		}
+
+		if (numAmount > (credit?.totalAmount ?? 0)) {
+			toast({
+				title: "El monto no puede ser mayor que el total adeudado",
+				variant: "destructive",
+				duration: 2000,
+			});
+			return;
+		}
+
 		try {
-			await createCapitalPayment(credit as Credit, Number(amount));
+			await createCapitalPayment(credit as Credit, numAmount);
 
 			toast({
 				title: "Abono realizado exitosamente!",
@@ -45,9 +65,9 @@ export default function PaymentModal({ isOpen, setIsOpen, credit }: Props) {
 			console.error(error);
 
 			toast({
-				title: "Error al abonar",
+				title: error instanceof Error ? error.message : "Error al abonar",
 				variant: "destructive",
-				duration: 1500,
+				duration: 2000,
 			});
 		} finally {
 			setIsOpen(false);
@@ -67,6 +87,10 @@ export default function PaymentModal({ isOpen, setIsOpen, credit }: Props) {
 							Valor a abonar:
 						</Label>
 						<Input
+							type="number"
+							min="1"
+							max={credit?.totalAmount}
+							step="1"
 							className="mt-1 col-span-3"
 							name="amount"
 							value={amount}

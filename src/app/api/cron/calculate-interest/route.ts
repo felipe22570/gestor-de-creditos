@@ -36,6 +36,7 @@ export async function GET() {
 	try {
 		// Current date for comparison
 		const currentDate = new Date();
+		const todayDateString = currentDate.toDateString();
 
 		// Get all active credits
 		const activeCredits = await db
@@ -44,14 +45,33 @@ export async function GET() {
 			.where(not(isNull(credits.nextPaymentDate)));
 
 		let updatedCredits = 0;
+		let skippedCredits = 0;
 
 		// Process each credit
 		for (const credit of activeCredits) {
 			// Skip if no start date
 			if (!credit.startDate) continue;
 
+			// Skip if total amount is zero or negative
+			if (credit.totalAmount <= 0) {
+				skippedCredits++;
+				continue;
+			}
+
 			// Convert timestamp to Date (timestamps in DB are in seconds)
 			const startDateObj = new Date(Number(credit.startDate) * 1000);
+
+			// Check for duplicate processing - skip if already processed today
+			if (credit.modifiedDate) {
+				const lastModifiedDate = new Date(Number(credit.modifiedDate) * 1000);
+				const lastModifiedDateString = lastModifiedDate.toDateString();
+				
+				if (lastModifiedDateString === todayDateString) {
+					// Already processed today, skip to avoid duplicate interest calculation
+					skippedCredits++;
+					continue;
+				}
+			}
 
 			// Check if today is one day after the monthly anniversary date
 			const isMonthlyInterestDay = isMonthlyAnniversaryPlusOne(startDateObj, currentDate);
@@ -78,7 +98,9 @@ export async function GET() {
 
 		return NextResponse.json({
 			success: true,
-			message: `Interest calculation completed successfully. Updated ${updatedCredits} credits.`,
+			message: `Interest calculation completed successfully. Updated ${updatedCredits} credits, skipped ${skippedCredits} credits.`,
+			updatedCredits,
+			skippedCredits,
 			timestamp: new Date().toISOString(),
 		});
 	} catch (error) {
@@ -99,29 +121,44 @@ export async function GET() {
 /**
  * Checks if the current date is one day after the monthly anniversary of the start date
  * For example, if start date is January 12, this will return true on February 13, March 13, etc.
- * Handles edge cases for month ends (e.g., if start date is Jan 31, will return true on Mar 1)
+ * Handles edge cases for month ends properly:
+ * - If start date is Jan 31, will trigger on Mar 1 (Feb 28/29 + 1 day)
+ * - If start date is Jan 30, will trigger on Mar 1 (Feb 28/29 + 1 day)
+ * - If start date is Jan 29 (non-leap year), will trigger on Mar 1 (Feb 28 + 1 day)
  */
 function isMonthlyAnniversaryPlusOne(startDate: Date, currentDate: Date): boolean {
-	// Get the day of the month from the start date
+	// Don't process if current date is before or same as start date
+	if (currentDate <= startDate) return false;
+
 	const startDay = startDate.getDate();
+	const startMonth = startDate.getMonth();
+	const startYear = startDate.getFullYear();
+
 	const currentDay = currentDate.getDate();
 	const currentMonth = currentDate.getMonth();
 	const currentYear = currentDate.getFullYear();
 
-	// Special handling for months with fewer days
-	// If the start date is on the 29th, 30th, or 31st
-	if (startDay >= 29) {
-		// Get the last day of previous month
-		const lastDayPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+	// Calculate total months difference
+	const monthsDiff = (currentYear - startYear) * 12 + (currentMonth - startMonth);
 
-		// Check if previous month didn't have enough days to match the start day
-		// (e.g., start date was Jan 30, and previous month was Feb with 28/29 days)
-		if (startDay > lastDayPrevMonth) {
-			// Check if today is the 1st day of the month (day after the last day of previous month)
-			return currentDay === 1;
-		}
+	// Must be at least 1 month after start date
+	if (monthsDiff < 1) return false;
+
+	// Calculate what the anniversary date should be in the current month
+	// If start day is 31 but current month only has 30 days, anniversary is on the 30th
+	const lastDayOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+	const anniversaryDay = Math.min(startDay, lastDayOfCurrentMonth);
+
+	// The target day is one day after the anniversary
+	const targetDay = anniversaryDay + 1;
+
+	// Handle month overflow (e.g., anniversary on last day of month, so +1 goes to next month)
+	if (targetDay > lastDayOfCurrentMonth) {
+		// The anniversary was on the last day of the previous month
+		// So if today is the 1st, we're one day after the anniversary
+		return currentDay === 1;
 	}
 
-	// For normal cases - check if current date matches the day after anniversary
-	return currentDay === startDay + 1 && currentDate.getTime() > startDate.getTime();
+	// Normal case: check if today matches anniversary + 1 day in the same month
+	return currentDay === targetDay;
 }

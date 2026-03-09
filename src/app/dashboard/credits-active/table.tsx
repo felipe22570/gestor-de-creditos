@@ -245,7 +245,7 @@ export default function CreditsActiveTable({ data }: Props) {
 								<CircleDollarSign className="mr-2 h-4 w-4" />
 								Abonar a capital
 							</DropdownMenuItem>
-							{credit.interestAmount && Number(credit.interestAmount) > 0 && (
+							{Number(credit.interestAmount) > 0 && (
 								<DropdownMenuItem
 									onClick={() => onPayCredit(credit, "INTEREST")}
 									className="cursor-pointer text-emerald-600"

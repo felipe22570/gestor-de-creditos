@@ -41,9 +41,9 @@ export default function PaymentFullModal({ isOpen, setIsOpen, credit }: Props) {
 			console.error(error);
 
 			toast({
-				title: "Error al realizar el pago",
+				title: error instanceof Error ? error.message : "Error al realizar el pago",
 				variant: "destructive",
-				duration: 1500,
+				duration: 2000,
 			});
 		} finally {
 			setIsOpen(false);

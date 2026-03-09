@@ -31,6 +31,8 @@ import { CircleDollarSign, History, MoreHorizontal, Pencil, Trash } from "lucide
 import { fetchCreditById } from "@/lib/actions/credit";
 import DeleteCreditModal from "@/components/modals/delete-credit";
 import PaymentModal from "@/components/modals/payment";
+import PaymentInterestModal from "@/components/modals/payment-interest";
+import PaymentFullModal from "@/components/modals/payment-full";
 import ViewPaymentsModal from "@/components/modals/view-payments";
 
 interface Props {
@@ -47,6 +49,10 @@ export default function CreditsDueTable({ data }: Props) {
 	const [creditToDelete, setCreditToDelete] = useState<number | null>(null);
 	const [openPaymentModal, setOpenPaymentModal] = useState(false);
 	const [creditToPay, setCreditToPay] = useState<Credit | null>(null);
+	const [openPaymentInterestModal, setOpenPaymentInterestModal] = useState(false);
+	const [creditToPayInterest, setCreditToPayInterest] = useState<Credit | null>(null);
+	const [openPaymentFullModal, setOpenPaymentFullModal] = useState(false);
+	const [creditToPayFull, setCreditToPayFull] = useState<Credit | null>(null);
 	const [openViewPaymentsModal, setOpenViewPaymentsModal] = useState(false);
 	const [creditToViewPayments, setCreditToViewPayments] = useState<Credit | null>(null);
 
@@ -187,11 +193,18 @@ export default function CreditsDueTable({ data }: Props) {
 								Pagar Capital
 							</DropdownMenuItem>
 							<DropdownMenuItem
-								onClick={() => onPayCredit(credit)}
+								onClick={() => onPayInterest(credit)}
 								className="text-green-500 cursor-pointer"
 							>
 								<CircleDollarSign className="mr-2 h-4 w-4" />
 								Pagar Interés
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => onPayFull(credit)}
+								className="text-green-500 cursor-pointer"
+							>
+								<CircleDollarSign className="mr-2 h-4 w-4" />
+								Pagar Completo
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => onViewPayments(credit)}
@@ -230,6 +243,16 @@ export default function CreditsDueTable({ data }: Props) {
 		setOpenPaymentModal(true);
 	};
 
+	const onPayInterest = (credit: Credit) => {
+		setCreditToPayInterest(credit);
+		setOpenPaymentInterestModal(true);
+	};
+
+	const onPayFull = (credit: Credit) => {
+		setCreditToPayFull(credit);
+		setOpenPaymentFullModal(true);
+	};
+
 	const onViewPayments = (credit: Credit) => {
 		setCreditToViewPayments(credit);
 		setOpenViewPaymentsModal(true);
@@ -252,6 +275,18 @@ export default function CreditsDueTable({ data }: Props) {
 			setCreditToPay(null);
 		}
 	}, [openPaymentModal]);
+
+	useEffect(() => {
+		if (!openPaymentInterestModal) {
+			setCreditToPayInterest(null);
+		}
+	}, [openPaymentInterestModal]);
+
+	useEffect(() => {
+		if (!openPaymentFullModal) {
+			setCreditToPayFull(null);
+		}
+	}, [openPaymentFullModal]);
 
 	useEffect(() => {
 		if (!openViewPaymentsModal) {
@@ -381,6 +416,20 @@ export default function CreditsDueTable({ data }: Props) {
 					isOpen={openPaymentModal}
 					setIsOpen={setOpenPaymentModal}
 					credit={creditToPay}
+				/>
+			)}
+			{openPaymentInterestModal && creditToPayInterest && (
+				<PaymentInterestModal
+					isOpen={openPaymentInterestModal}
+					setIsOpen={setOpenPaymentInterestModal}
+					credit={creditToPayInterest}
+				/>
+			)}
+			{openPaymentFullModal && creditToPayFull && (
+				<PaymentFullModal
+					isOpen={openPaymentFullModal}
+					setIsOpen={setOpenPaymentFullModal}
+					credit={creditToPayFull}
 				/>
 			)}
 			{openViewPaymentsModal && creditToViewPayments && (

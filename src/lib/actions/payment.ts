@@ -5,7 +5,8 @@ import { credits, payments } from "@/db/schema";
 import { PaymentRequest } from "@/types/payment";
 import { Credit } from "@/types/schema";
 import { getNextPaymentDate } from "../utils";
-import { eq } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
+import { addMonths, endOfMonth, isLastDayOfMonth } from "date-fns";
 
 export async function fetchPayments(adminId: number) {
 	try {
@@ -30,6 +31,28 @@ export async function fetchPaymentsByCreditId(creditId: number) {
 }
 
 export async function createCapitalPayment(credit: Credit, amount: number) {
+	// Validate credit state
+	if (!credit.nextPaymentDate) {
+		throw new Error("No se puede pagar un crédito completado");
+	}
+
+	if (credit.totalAmount <= 0) {
+		throw new Error("El crédito ya está pagado completamente");
+	}
+
+	if (credit.totalAmount < 0) {
+		throw new Error("El crédito tiene un estado inválido (monto negativo)");
+	}
+
+	// Validate payment amount
+	if (amount <= 0) {
+		throw new Error("El monto debe ser mayor que cero");
+	}
+
+	if (amount > credit.totalAmount) {
+		throw new Error("El monto no puede ser mayor que el total adeudado");
+	}
+
 	const paymentData: PaymentRequest = {
 		adminId: credit.adminId,
 		clientId: credit.clientCardId,
@@ -41,30 +64,42 @@ export async function createCapitalPayment(credit: Credit, amount: number) {
 		paymentType: "CAPITAL",
 	};
 
-	const nextPaymentDate = getNextPaymentDate(credit.nextPaymentDate as Date);
+	const nextPaymentDate = getNextPaymentDate(credit.nextPaymentDate as Date, credit.startDate as Date);
 
 	const totalResidual = credit.totalAmount - amount;
 
 	try {
-		await db.insert(payments).values(paymentData);
-		await db
-			.update(credits)
-			.set({
-				nextPaymentDate,
-				totalAmount: totalResidual,
-				modifiedDate: new Date(),
-			})
-			.where(eq(credits.id, credit.id));
+		// Use transaction to ensure atomicity
+		await db.transaction(async (tx) => {
+			await tx.insert(payments).values(paymentData);
+			await tx
+				.update(credits)
+				.set({
+					nextPaymentDate,
+					totalAmount: totalResidual,
+					modifiedDate: new Date(),
+				})
+				.where(eq(credits.id, credit.id));
+		});
 
 		return "Payment created successfully";
 	} catch (error) {
 		console.error(error);
-
-		return null;
+		throw new Error("Error al procesar el pago");
 	}
 }
 
 export async function createInterestPayment(credit: Credit, amount: number, addNewInterest: boolean) {
+	// Validate credit state
+	if (!credit.nextPaymentDate) {
+		throw new Error("No se puede pagar un crédito completado");
+	}
+
+	// Validate payment amount
+	if (amount <= 0) {
+		throw new Error("El monto debe ser mayor que cero");
+	}
+
 	const paymentData: PaymentRequest = {
 		adminId: credit.adminId,
 		clientId: credit.clientCardId,
@@ -76,97 +111,188 @@ export async function createInterestPayment(credit: Credit, amount: number, addN
 		paymentType: "INTEREST",
 	};
 
-	const nextPaymentDate = getNextPaymentDate(credit.nextPaymentDate as Date);
+	const nextPaymentDate = getNextPaymentDate(credit.nextPaymentDate as Date, credit.startDate as Date);
+
+	// Calculate new interest amount based on flag
+	// If addNewInterest is true, calculate new interest for next month
+	// If false, clear the interest (set to 0)
+	const newInterestAmount = addNewInterest
+		? Math.floor(credit.totalAmount * (credit.interestRate / 100))
+		: 0;
 
 	try {
-		await db.insert(payments).values(paymentData);
-
-		const updateCreditData = {
-			nextPaymentDate,
-			modifiedDate: new Date(),
-		};
-		const finalUpdateData = {
-			...updateCreditData,
-			...(addNewInterest ? { interestAmount: amount } : {}),
-		};
-
-		await db.update(credits).set(finalUpdateData).where(eq(credits.id, credit.id));
+		// Use transaction to ensure atomicity
+		await db.transaction(async (tx) => {
+			await tx.insert(payments).values(paymentData);
+			await tx
+				.update(credits)
+				.set({
+					nextPaymentDate,
+					interestAmount: newInterestAmount,
+					modifiedDate: new Date(),
+				})
+				.where(eq(credits.id, credit.id));
+		});
 
 		return "Payment created successfully";
 	} catch (error) {
 		console.error(error);
-
-		return null;
+		throw new Error("Error al procesar el pago de interés");
 	}
 }
 
 export async function createFullPayment(credit: Credit) {
+	// Validate credit state
+	if (!credit.nextPaymentDate) {
+		throw new Error("No se puede pagar un crédito ya completado");
+	}
+
+	if (credit.totalAmount <= 0) {
+		throw new Error("El crédito ya está pagado completamente");
+	}
+
+	// Calculate total payment amount (capital + interest)
+	const totalPaymentAmount = credit.totalAmount + (credit.interestAmount || 0);
+
 	const paymentData: PaymentRequest = {
 		adminId: credit.adminId,
 		clientId: credit.clientCardId,
 		creditId: credit.id,
 		creditName: credit.productName,
-		amountPaid: credit.totalAmount,
+		amountPaid: totalPaymentAmount,
 		startDate: new Date(),
 		clientName: credit.clientName,
-		paymentType: "CAPITAL",
+		paymentType: "FULL",
 	};
 
 	try {
-		await db.insert(payments).values(paymentData);
-		await db
-			.update(credits)
-			.set({
-				nextPaymentDate: null,
-				totalAmount: 0,
-				interestAmount: 0,
-				modifiedDate: new Date(),
-			})
-			.where(eq(credits.id, credit.id));
+		// Use transaction to ensure atomicity
+		await db.transaction(async (tx) => {
+			await tx.insert(payments).values(paymentData);
+			await tx
+				.update(credits)
+				.set({
+					nextPaymentDate: null,
+					totalAmount: 0,
+					interestAmount: 0,
+					modifiedDate: new Date(),
+				})
+				.where(eq(credits.id, credit.id));
+		});
 
 		return "Payment created successfully";
 	} catch (error) {
 		console.error(error);
-
-		return null;
+		throw new Error("Error al procesar el pago completo");
 	}
+}
+
+/**
+ * Recalculates nextPaymentDate from scratch based on startDate and the
+ * number of CAPITAL/INTEREST payments remaining for the credit.
+ * Each such payment represents one month advancement from the start date.
+ */
+function recalculateNextPaymentDate(startDate: Date, paymentCount: number): Date {
+	const referenceDay = startDate.getDate();
+	const isOriginalLastDay = isLastDayOfMonth(startDate);
+
+	// nextPaymentDate = startDate + (paymentCount + 1) months
+	// +1 because the first nextPaymentDate at credit creation is startDate + 1 month
+	let date = startDate;
+	const totalMonths = paymentCount + 1;
+
+	for (let i = 0; i < totalMonths; i++) {
+		date = addMonths(date, 1);
+		if (isOriginalLastDay) {
+			date = endOfMonth(date);
+		} else {
+			const lastDay = endOfMonth(date).getDate();
+			const targetDay = Math.min(referenceDay, lastDay);
+			date = new Date(date.getFullYear(), date.getMonth(), targetDay);
+		}
+	}
+
+	return date;
 }
 
 export async function deletePayment(paymentId: number) {
 	try {
-		// First fetch the payment to know its details
 		const payment = await db.select().from(payments).where(eq(payments.id, paymentId)).get();
 
 		if (!payment) {
-			return { success: false, message: "Payment not found" };
+			return { success: false, message: "Pago no encontrado" };
 		}
 
-		// Delete the payment
-		await db.delete(payments).where(eq(payments.id, paymentId));
+		const credit = await db.select().from(credits).where(eq(credits.id, payment.creditId)).get();
 
-		// If it's a capital payment, we need to update the credit amount
-		if (payment.paymentType === "CAPITAL" && payment.amountPaid !== null) {
-			// Get the credit
-			const credit = await db.select().from(credits).where(eq(credits.id, payment.creditId)).get();
+		if (!credit) {
+			return { success: false, message: "Crédito no encontrado" };
+		}
 
-			if (credit) {
-				// Add back the amount to the total
-				const updatedTotalAmount = credit.totalAmount + payment.amountPaid;
+		await db.transaction(async (tx) => {
+			// Delete the payment first
+			await tx.delete(payments).where(eq(payments.id, paymentId));
 
-				// Update the credit
-				await db
+			// Count remaining CAPITAL + INTEREST payments for this credit (after deletion)
+			const remainingPayments = await tx
+				.select()
+				.from(payments)
+				.where(
+					and(
+						eq(payments.creditId, payment.creditId),
+						or(
+							eq(payments.paymentType, "CAPITAL"),
+							eq(payments.paymentType, "INTEREST")
+						)
+					)
+				);
+
+			const paymentCount = remainingPayments.length;
+			const startDate = credit.startDate as Date;
+			const newNextPaymentDate = recalculateNextPaymentDate(startDate, paymentCount);
+
+			if (payment.paymentType === "CAPITAL") {
+				await tx
 					.update(credits)
 					.set({
-						totalAmount: updatedTotalAmount,
+						totalAmount: credit.totalAmount + (payment.amountPaid || 0),
+						nextPaymentDate: newNextPaymentDate,
+						modifiedDate: new Date(),
+					})
+					.where(eq(credits.id, payment.creditId));
+			} else if (payment.paymentType === "INTEREST") {
+				await tx
+					.update(credits)
+					.set({
+						interestAmount: (credit.interestAmount || 0) + (payment.amountPaid || 0),
+						nextPaymentDate: newNextPaymentDate,
+						modifiedDate: new Date(),
+					})
+					.where(eq(credits.id, payment.creditId));
+			} else if (payment.paymentType === "FULL") {
+				// Restore capital: initialAmount minus all remaining CAPITAL payments
+				const totalCapitalPaid = remainingPayments
+					.filter((p) => p.paymentType === "CAPITAL")
+					.reduce((sum, p) => sum + (p.amountPaid || 0), 0);
+
+				const restoredCapital = credit.initialAmount - totalCapitalPaid;
+				const restoredInterest = Math.max(0, (payment.amountPaid || 0) - restoredCapital);
+
+				await tx
+					.update(credits)
+					.set({
+						totalAmount: restoredCapital,
+						interestAmount: restoredInterest,
+						nextPaymentDate: newNextPaymentDate,
 						modifiedDate: new Date(),
 					})
 					.where(eq(credits.id, payment.creditId));
 			}
-		}
+		});
 
-		return { success: true, message: "Payment deleted successfully" };
+		return { success: true, message: "Pago eliminado exitosamente" };
 	} catch (error) {
 		console.error("Error deleting payment:", error);
-		return { success: false, message: "Failed to delete payment" };
+		return { success: false, message: "Error al eliminar el pago" };
 	}
 }
