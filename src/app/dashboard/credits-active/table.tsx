@@ -198,7 +198,10 @@ export default function CreditsActiveTable({ data }: Props) {
 				const isOverdue = paymentDate < currentDate;
 
 				return (
+					// suppressHydrationWarning: server (UTC) and client (UTC-5 Colombia) can
+					// disagree on "today" near midnight, causing a benign class mismatch.
 					<span
+						suppressHydrationWarning
 						className={cn(
 							"text-sm font-bold",
 							isOverdue ? "text-red-600" : "text-green-600"

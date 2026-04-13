@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Credit, Payment } from "@/types/schema";
 import { useEffect, useState, useCallback } from "react";
 import { format } from "date-fns";
@@ -141,6 +141,9 @@ export default function ViewPaymentsModal({ isOpen, setIsOpen, credit }: Props) 
 			<DialogContent className="max-w-3xl">
 				<DialogHeader>
 					<DialogTitle>Historial de Pagos - {credit?.productName}</DialogTitle>
+					<DialogDescription className="sr-only">
+						Lista de todos los pagos registrados para este crédito.
+					</DialogDescription>
 				</DialogHeader>
 				<div className="mt-4">
 					<Table>

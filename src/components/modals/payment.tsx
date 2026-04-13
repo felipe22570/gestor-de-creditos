@@ -1,7 +1,7 @@
 "use client";
 
 import { Credit } from "@/types/schema";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { useState } from "react";
 import { Input } from "../ui/input";
@@ -80,6 +80,9 @@ export default function PaymentModal({ isOpen, setIsOpen, credit }: Props) {
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Realizar pago a capital</DialogTitle>
+					<DialogDescription className="sr-only">
+						Ingresa el valor a abonar al capital del crédito.
+					</DialogDescription>
 				</DialogHeader>
 				<div className="h-full">
 					<div className="">
