@@ -16,7 +16,7 @@ const CRON_SECRET = process.env.CRON_SECRET;
  */
 export async function GET() {
 	// Get the authorization header
-	const headersList = headers();
+	const headersList = await headers();
 	const authorization = headersList.get("authorization");
 
 	// Verify the secret token

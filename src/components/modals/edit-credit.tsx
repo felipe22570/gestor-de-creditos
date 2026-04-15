@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -95,7 +95,10 @@ export default function EditCreditModal({ isOpen, setIsOpen, credit }: Props) {
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Editar Credito</DialogTitle>
+					<DialogTitle>Editar Crédito</DialogTitle>
+					<DialogDescription className="sr-only">
+						Modifica los datos del crédito seleccionado.
+					</DialogDescription>
 				</DialogHeader>
 				<form onSubmit={handleSubmit} className="grid gap-4 py-4">
 					<div className="items-center gap-4">

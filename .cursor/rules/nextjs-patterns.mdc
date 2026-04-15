@@ -1,10 +1,10 @@
 ---
-description: Next.js 14 App Router patterns and conventions
+description: Next.js 16 App Router patterns and conventions
 globs: "**/*.{ts,tsx}"
 alwaysApply: false
 ---
 
-# Next.js Patterns
+# Next.js Patterns (v16)
 
 ## Server vs Client Components
 
@@ -27,6 +27,14 @@ export function InteractiveModal() {
 - Use server components by default
 - Use "use client" only for interactivity, hooks, or browser APIs
 - Fetch data in server components, not client components
+- Next.js 15+ `params` and `searchParams` in pages/layouts are now **async** — always `await` them:
+
+```typescript
+// ✅ GOOD - Next.js 15+/16
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+}
+```
 
 ## Data Fetching & Revalidation
 

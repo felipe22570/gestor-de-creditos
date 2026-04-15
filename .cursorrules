@@ -2,19 +2,21 @@
 
 ## Project Overview
 
-This is a Next.js 14 credit management system built with TypeScript, using Drizzle ORM with Turso (SQLite), NextAuth v5, and shadcn/ui components. The application is in Spanish and manages credit operations for a financial business.
+This is a Next.js 16 credit management system built with TypeScript, using Drizzle ORM with Turso (SQLite), NextAuth v5 (beta.30), and shadcn/ui components. The application is in Spanish and manages credit operations for a financial business.
 
 ## Tech Stack
 
--    **Framework**: Next.js 14 (App Router)
--    **Language**: TypeScript (strict mode)
--    **Styling**: Tailwind CSS with shadcn/ui components
--    **Database**: Turso (SQLite) with Drizzle ORM
--    **Authentication**: NextAuth v5 (beta)
+-    **Framework**: Next.js 16.2.3 (App Router)
+-    **Runtime**: React 19
+-    **Language**: TypeScript 5 (strict mode)
+-    **Styling**: Tailwind CSS 3 with shadcn/ui components
+-    **Database**: Turso (SQLite) with Drizzle ORM 0.33 + drizzle-kit 0.24
+-    **Authentication**: NextAuth v5 (5.0.0-beta.30)
 -    **UI Library**: Radix UI primitives via shadcn/ui
 -    **State Management**: React hooks, server actions
--    **Date Handling**: date-fns
--    **Tables**: TanStack React Table
+-    **Date Handling**: date-fns v4
+-    **Tables**: TanStack React Table v8
+-    **Testing**: Vitest 4 + Testing Library
 -    **Package Manager**: pnpm
 
 ## Code Style & Conventions

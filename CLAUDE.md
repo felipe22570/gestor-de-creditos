@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Next.js 14 credit management system (in Spanish) for managing loans, payments, and clients. Built with TypeScript, Drizzle ORM, Turso (remote SQLite), NextAuth v5, and shadcn/ui components.
+A Next.js 16 credit management system (in Spanish) for managing loans, payments, and clients. Built with TypeScript, React 19, Drizzle ORM, Turso (remote SQLite), NextAuth v5 (beta.30), and shadcn/ui components.
 
 ## Development Commands
 
@@ -16,6 +16,13 @@ pnpm dev              # Start dev server at http://localhost:3000
 pnpm build            # Build for production
 pnpm start            # Run production server
 pnpm lint             # Run ESLint
+
+# Testing (Vitest 4)
+pnpm test             # Watch mode
+pnpm test:run         # Single run (CI)
+
+# Git hooks
+# Husky pre-commit hook runs on every commit (configured in .husky/pre-commit)
 
 # Database (Drizzle)
 pnpm drizzle-kit generate  # Generate migrations from schema changes
@@ -119,30 +126,71 @@ Three payment types handled differently in `src/lib/actions/payment.ts`:
 
 **Interest Payment** (`createInterestPayment`)
 - Pays down interestAmount only
-- Can accept new interest charges to add to existing interestAmount
-- Does NOT modify nextPaymentDate
+- Advances `nextPaymentDate` by one month (same as capital payment)
+- `addNewInterest: boolean` parameter: if true, recalculates and sets new interestAmount for next month; if false, clears interestAmount to 0
 
 **Full Payment** (`createFullPayment`)
-- Pays off entire remaining balance
+- Pays off entire remaining balance: `amountPaid = totalAmount + interestAmount`
 - Sets: nextPaymentDate = NULL, totalAmount = 0, interestAmount = 0
 - Marks credit as completed
 
+**Delete Payment** (`deletePayment`)
+- Reverses a payment and restores credit state atomically via `db.transaction()`
+- CAPITAL deletion: restores `totalAmount`, recalculates `nextPaymentDate`
+- INTEREST deletion: restores `interestAmount`, recalculates `nextPaymentDate`
+- FULL deletion: restores capital (initialAmount minus remaining CAPITAL payments), restores interest, recalculates `nextPaymentDate`
+- `nextPaymentDate` is always recomputed from scratch using `recalculateNextPaymentDate(startDate, remainingPaymentCount)`
+
+> All payment mutations (create and delete) run inside `db.transaction()` for atomicity.
+
 ### Date Handling & Monthly Anniversaries
 
-**Key utility**: `getNextPaymentDate()` in `src/lib/utils.ts`
-- Uses date-fns library
-- Preserves month-end anniversary logic
-- Example: Credit started Jan 31 → next payment Feb 28/29 → Mar 31
-- Handles edge cases for months with different day counts
+**Key utilities** in `src/lib/utils.ts`:
+
+**`getNextPaymentDate(paymentDate, startDate?)`**
+- Advances one month from `paymentDate`, preserving the original day-of-month from `startDate` to prevent drift
+- If the result is still in the past (overdue credit), keeps advancing month-by-month until the date is in the future
+- Handles month-end edge cases (e.g. Jan 31 → Feb 28/29 → Mar 31)
+
+**`recalculateNextPaymentDate(startDate, paymentCount)`**
+- Recomputes `nextPaymentDate` from scratch: `startDate + (paymentCount + 1) months`
+- Used when deleting a payment to restore the correct date without drift
+- `+1` because the first `nextPaymentDate` at credit creation is already `startDate + 1 month`
+
+**`isMonthlyAnniversaryPlusOne(startDate, currentDate)`**
+- Returns true if `currentDate` is exactly one day after the monthly anniversary of `startDate`
+- Used by the cron job to determine when to charge monthly interest
+- Handles month-end edge cases (e.g. Jan 31 anniversary triggers on Mar 1)
+
+**`calculateInterest(totalAmount, interestRate)`**
+- Formula: `Math.floor(totalAmount * (interestRate / 100))`
 
 ### Automated Interest Calculation
 
 **Cron job**: `/api/cron/calculate-interest`
 - Secured with Bearer token (CRON_SECRET env variable)
 - Runs: Daily via Vercel scheduled jobs
-- Logic: Adds monthly interest one day after credit anniversary
+- Logic: Calls `isMonthlyAnniversaryPlusOne()` per credit; if true, adds interest via `calculateInterest()`
 - Formula: `Math.floor(totalAmount * (interestRate / 100))`
 - See: `src/app/api/cron/calculate-interest/README.md` for details
+
+### Test Suite
+
+Unit tests in `src/lib/__tests__/` (Vitest 4, jsdom environment):
+
+| File | What it covers |
+|---|---|
+| `calculate-interest.test.ts` | `calculateInterest()` utility |
+| `credit-lifecycle.test.ts` | Full credit state transitions |
+| `cron-interest.test.ts` | Cron interest calculation logic |
+| `format-cop.test.ts` | `formatCOP()` currency formatting |
+| `get-next-payment-date.test.ts` | `getNextPaymentDate()` edge cases |
+| `is-monthly-anniversary.test.ts` | `isMonthlyAnniversaryPlusOne()` edge cases |
+| `payment-deletion.test.ts` | `deletePayment()` reversal logic |
+| `payment-validation.test.ts` | Payment validation (amounts, credit state) |
+| `recalculate-next-payment-date.test.ts` | `recalculateNextPaymentDate()` |
+
+Config: `vitest.config.ts` — uses `@vitejs/plugin-react`, `vite-tsconfig-paths`, setup file imports `@testing-library/jest-dom`.
 
 ### Component Architecture
 
@@ -195,6 +243,16 @@ TypeScript with strict mode enabled. Key type locations:
 - Custom utilities:
   - `cn()` for conditional className merging
   - `formatCOP()` for Colombian Peso currency formatting
+
+## Next.js 15+/16 Breaking Changes
+
+- **`params` and `searchParams` are async** in pages and layouts — always `await` them:
+  ```typescript
+  export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+  }
+  ```
+- **`headers()`, `cookies()`, `searchParams()`** are also async in Route Handlers and Server Actions.
 
 ## Important Patterns to Follow
 
