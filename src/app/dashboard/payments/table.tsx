@@ -2,7 +2,7 @@
 
 import { Payment } from "@/types/schema";
 import { DataTable } from "@/components/ui/data-table";
-import { columns } from "./colums";
+import { columns } from "./columns";
 import {
 	getCoreRowModel,
 	getFilteredRowModel,
@@ -13,7 +13,7 @@ import {
 	SortingState,
 } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -49,8 +49,41 @@ export default function PaymentsTable({ data }: Props) {
 		onGlobalFilterChange: setGlobalFilter,
 	});
 
+	const totals = useMemo(() => {
+		const totalRecaudado = data.reduce((sum, p) => sum + (p.amountPaid || 0), 0);
+		const capitalCount = data.filter((p) => p.paymentType === "CAPITAL").length;
+		const interestCount = data.filter((p) => p.paymentType === "INTEREST").length;
+		const fullCount = data.filter((p) => p.paymentType === "FULL").length;
+		return { totalRecaudado, capitalCount, interestCount, fullCount, total: data.length };
+	}, [data]);
+
 	return (
 		<div className="">
+			{/* Summary Section */}
+			<div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6 p-4 bg-muted/30 rounded-lg border">
+				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border col-span-2 md:col-span-1">
+					<h3 className="text-sm font-medium text-muted-foreground mb-1">Total Recaudado</h3>
+					<p className="text-2xl font-bold text-green-600">
+						{new Intl.NumberFormat("es-CO", {
+							style: "currency",
+							currency: "COP",
+						}).format(totals.totalRecaudado)}
+					</p>
+				</div>
+				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
+					<h3 className="text-sm font-medium text-muted-foreground mb-1">Capital</h3>
+					<p className="text-2xl font-bold text-blue-600">{totals.capitalCount}</p>
+				</div>
+				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
+					<h3 className="text-sm font-medium text-muted-foreground mb-1">Interés</h3>
+					<p className="text-2xl font-bold text-yellow-600">{totals.interestCount}</p>
+				</div>
+				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
+					<h3 className="text-sm font-medium text-muted-foreground mb-1">Completos</h3>
+					<p className="text-2xl font-bold text-purple-600">{totals.fullCount}</p>
+				</div>
+			</div>
+
 			<div className="flex justify-between mt-10 mb-5">
 				<Input
 					type="text"

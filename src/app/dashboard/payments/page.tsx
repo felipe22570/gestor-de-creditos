@@ -7,7 +7,7 @@ export default async function PaymentsPage() {
 	const payments = await fetchPayments(session?.user?.id as unknown as number);
 
 	return (
-		<div className="w-100">
+		<div className="w-full">
 			<h1 className="text-3xl my-3">Abonos Realizados</h1>
 			<PaymentsTable data={payments} />
 		</div>

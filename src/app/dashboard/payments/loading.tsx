@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PaymentsLoading() {
 	return (
-		<div className="w-100">
+		<div className="w-full">
 			<h1 className="text-3xl my-3">
 				<Skeleton className="h-9 w-48" />
 			</h1>

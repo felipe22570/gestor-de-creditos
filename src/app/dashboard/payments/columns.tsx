@@ -128,7 +128,7 @@ export const columns: ColumnDef<Payment>[] = [
 		cell: ({ row }) => {
 			const date = format(new Date(row.getValue("startDate")), "dd/MM/yyyy");
 
-			return <span className="w-3 text-sm font-medium">{date}</span>;
+			return <span className="text-sm font-medium whitespace-nowrap">{date}</span>;
 		},
 		maxSize: 10,
 	},
@@ -169,7 +169,7 @@ export const columns: ColumnDef<Payment>[] = [
 
 			return (
 				<span className="text-sm font-medium">
-					{paymentTypes[paymentType as keyof typeof paymentTypes] ?? "Capital"}
+					{paymentTypes[paymentType as keyof typeof paymentTypes] ?? "Desconocido"}
 				</span>
 			);
 		},

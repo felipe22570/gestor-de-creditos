@@ -31,9 +31,10 @@ import ViewPaymentsModal from "@/components/modals/view-payments";
 
 interface Props {
 	data: Credit[];
+	totalRecaudado: number;
 }
 
-export default function CreditsCompletedTable({ data }: Props) {
+export default function CreditsCompletedTable({ data, totalRecaudado }: Props) {
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [globalFilter, setGlobalFilter] = useState<unknown>([]);
 	const [sorting, setSorting] = useState<SortingState>([]);
@@ -84,7 +85,7 @@ export default function CreditsCompletedTable({ data }: Props) {
 			cell: ({ row }) => {
 				const date = format(new Date(row.getValue("startDate")), "dd/MM/yyyy");
 
-				return <span className="w-3 text-sm font-medium">{date}</span>;
+				return <span className="text-sm font-medium whitespace-nowrap">{date}</span>;
 			},
 			maxSize: 10,
 		},
@@ -238,16 +239,27 @@ export default function CreditsCompletedTable({ data }: Props) {
 			</div>
 
 			{/* Summary Section */}
-			<div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6 p-4 bg-muted/30 rounded-lg border">
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-muted/30 rounded-lg border">
 				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
 					<h3 className="text-sm font-medium text-muted-foreground mb-1">
-						Total Monto Recaudado
+						Total Capital Prestado
+					</h3>
+					<p className="text-2xl font-bold text-blue-600">
+						{new Intl.NumberFormat("es-CO", {
+							style: "currency",
+							currency: "COP",
+						}).format(totals.initialAmount)}
+					</p>
+				</div>
+				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
+					<h3 className="text-sm font-medium text-muted-foreground mb-1">
+						Total Recaudado
 					</h3>
 					<p className="text-2xl font-bold text-green-600">
 						{new Intl.NumberFormat("es-CO", {
 							style: "currency",
 							currency: "COP",
-						}).format(totals.initialAmount)}
+						}).format(totalRecaudado)}
 					</p>
 				</div>
 			</div>

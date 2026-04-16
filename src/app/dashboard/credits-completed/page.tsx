@@ -1,36 +1,20 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { auth } from "@/auth.config";
 import { fetchCompletedCredits } from "@/lib/actions/credit";
+import { fetchTotalRecaudadoForCompletedCredits } from "@/lib/actions/payment";
 import CreditsCompletedTable from "./table";
-import { Credit } from "@/types/schema";
 
-export default function CreditsCompletedPage() {
-	const { data: session } = useSession();
-	const [credits, setCredits] = useState<Credit[]>([]);
-	const [loading, setLoading] = useState(true);
-
-	useEffect(() => {
-		const loadCredits = async () => {
-			if (session?.user?.id) {
-				const completedCredits = await fetchCompletedCredits(Number(session.user.id));
-				setCredits(completedCredits);
-			}
-			setLoading(false);
-		};
-
-		loadCredits();
-	}, [session?.user?.id]);
-
-	if (loading) {
-		return <div>Cargando...</div>;
-	}
+export default async function CreditsCompletedPage() {
+	const session = await auth();
+	const adminId = session?.user?.id as unknown as number;
+	const [credits, totalRecaudado] = await Promise.all([
+		fetchCompletedCredits(adminId),
+		fetchTotalRecaudadoForCompletedCredits(adminId),
+	]);
 
 	return (
-		<div>
+		<div className="w-full">
 			<h1 className="text-3xl my-3">Créditos Completados</h1>
-			<CreditsCompletedTable data={credits} />
+			<CreditsCompletedTable data={credits} totalRecaudado={totalRecaudado} />
 		</div>
 	);
 }
