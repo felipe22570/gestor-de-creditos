@@ -5,7 +5,7 @@ import { credits, payments } from "@/db/schema";
 import { PaymentRequest } from "@/types/payment";
 import { Credit } from "@/types/schema";
 import { getNextPaymentDate, recalculateNextPaymentDate } from "../utils";
-import { eq, and, or } from "drizzle-orm";
+import { eq, and, or, isNull } from "drizzle-orm";
 
 export async function fetchPayments(adminId: number) {
 	try {
@@ -265,5 +265,35 @@ export async function deletePayment(paymentId: number) {
 	} catch (error) {
 		console.error("Error deleting payment:", error);
 		return { success: false, message: "Error al eliminar el pago" };
+	}
+}
+
+export async function fetchTotalRecaudadoForCompletedCredits(adminId: number): Promise<number> {
+	try {
+		const completedCreditsData = await db
+			.select({ id: credits.id })
+			.from(credits)
+			.where(
+				and(
+					eq(credits.adminId, adminId),
+					isNull(credits.nextPaymentDate),
+					eq(credits.totalAmount, 0)
+				)
+			);
+
+		if (completedCreditsData.length === 0) return 0;
+
+		const completedIds = new Set(completedCreditsData.map((c) => c.id));
+		const paymentsData = await db
+			.select({ amountPaid: payments.amountPaid, creditId: payments.creditId })
+			.from(payments)
+			.where(eq(payments.adminId, adminId));
+
+		return paymentsData
+			.filter((p) => completedIds.has(p.creditId!))
+			.reduce((sum, p) => sum + (p.amountPaid || 0), 0);
+	} catch (error) {
+		console.error(error);
+		return 0;
 	}
 }

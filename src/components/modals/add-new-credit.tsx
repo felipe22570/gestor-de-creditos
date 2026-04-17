@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { createCredit } from "@/lib/actions/credit";
 import { CreditRequest } from "@/types/credit";
 import { useSession } from "next-auth/react";
@@ -177,135 +176,153 @@ export default function AddNewCreditModal() {
 			<DialogTrigger asChild>
 				<Button variant="default">Agregar Nuevo Crédito</Button>
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-[525px]">
-				<DialogHeader>
+			<DialogContent className="sm:max-w-[500px] max-h-[95vh] flex flex-col p-0 gap-0">
+				<DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
 					<DialogTitle>Agregar Nuevo Crédito</DialogTitle>
 					<DialogDescription className="sr-only">
 						Completa el formulario para registrar un nuevo crédito.
 					</DialogDescription>
 				</DialogHeader>
-				<form onSubmit={handleSubmit} className="grid gap-4 py-4">
-					<div className="items-center gap-4">
-						<Label htmlFor="clientCardId" className="text-right">
-							Número de Cédula <span className="text-red-500">*</span>
-						</Label>
-						<Input
-							id="clientCardId"
-							name="clientCardId"
-							type="number"
-							className="col-span-3"
-							value={formData.clientCardId}
-							onChange={handleInputChange}
-							required
-							disabled={isLoading}
-							min="1"
-						/>
-					</div>
-					<div className="items-center gap-4">
-						<Label htmlFor="clientName" className="text-right">
-							Nombre <span className="text-red-500">*</span>
-						</Label>
-						<Input
-							id="clientName"
-							name="clientName"
-							className="col-span-3"
-							value={formData.clientName}
-							onChange={handleInputChange}
-							required
-							disabled={isLoading}
-						/>
-					</div>
-					<div className="items-center gap-4">
-						<Label htmlFor="clientPhone" className="text-right">
-							Teléfono <span className="text-red-500">*</span>
-						</Label>
-						<Input
-							id="clientPhone"
-							name="clientPhone"
-							type="tel"
-							className="col-span-3"
-							value={formData.clientPhone}
-							onChange={handleInputChange}
-							required
-							disabled={isLoading}
-						/>
-					</div>
-					<div className="items-center gap-4">
-						<Label htmlFor="productName" className="text-right">
-							Nombre del Producto <span className="text-red-500">*</span>
-						</Label>
-						<Textarea
-							id="productName"
-							name="productName"
-							className="col-span-3"
-							value={formData.productName}
-							onChange={handleInputChange}
-							required
-							disabled={isLoading}
-						/>
-					</div>
-					<div className="items-center gap-4">
-						<Label htmlFor="value" className="text-right">
-							Valor del Crédito <span className="text-red-500">*</span>
-						</Label>
-						<Input
-							id="value"
-							name="value"
-							type="number"
-							className="col-span-3"
-							value={formData.value}
-							onChange={handleInputChange}
-							required
-							disabled={isLoading}
-							min="1"
-							step="1"
-						/>
-					</div>
-					<div className="items-center gap-4">
-						<Label htmlFor="interestRate" className="text-right">
-							Porcentaje de Interés (%) <span className="text-red-500">*</span>
-						</Label>
-						<Input
-							id="interestRate"
-							name="interestRate"
-							type="number"
-							className="col-span-3"
-							value={formData.interestRate}
-							onChange={handleInputChange}
-							required
-							disabled={isLoading}
-							min="0"
-							step="0.01"
-						/>
+
+				<form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+					<div className="flex-1 overflow-y-auto px-6 py-4 grid gap-3">
+						<div className="grid grid-cols-2 gap-3">
+							<div className="flex flex-col gap-1.5">
+								<Label htmlFor="clientCardId">
+									Cédula <span className="text-red-500">*</span>
+								</Label>
+								<Input
+									id="clientCardId"
+									name="clientCardId"
+									type="number"
+									value={formData.clientCardId}
+									onChange={handleInputChange}
+									required
+									disabled={isLoading}
+									min="1"
+									placeholder="Ej: 1234567890"
+								/>
+							</div>
+							<div className="flex flex-col gap-1.5">
+								<Label htmlFor="clientPhone">
+									Teléfono <span className="text-red-500">*</span>
+								</Label>
+								<Input
+									id="clientPhone"
+									name="clientPhone"
+									type="tel"
+									value={formData.clientPhone}
+									onChange={handleInputChange}
+									required
+									disabled={isLoading}
+									placeholder="Ej: 3001234567"
+								/>
+							</div>
+						</div>
+
+						<div className="flex flex-col gap-1.5">
+							<Label htmlFor="clientName">
+								Nombre <span className="text-red-500">*</span>
+							</Label>
+							<Input
+								id="clientName"
+								name="clientName"
+								value={formData.clientName}
+								onChange={handleInputChange}
+								required
+								disabled={isLoading}
+								placeholder="Nombre completo del cliente"
+							/>
+						</div>
+
+						<div className="flex flex-col gap-1.5">
+							<Label htmlFor="productName">
+								Nombre del Producto <span className="text-red-500">*</span>
+							</Label>
+							<Input
+								id="productName"
+								name="productName"
+								value={formData.productName}
+								onChange={handleInputChange}
+								required
+								disabled={isLoading}
+								placeholder="Descripción del producto o servicio"
+							/>
+						</div>
+
+						<div className="grid grid-cols-2 gap-3">
+							<div className="flex flex-col gap-1.5">
+								<Label htmlFor="value">
+									Valor del Crédito <span className="text-red-500">*</span>
+								</Label>
+								<Input
+									id="value"
+									name="value"
+									type="number"
+									value={formData.value}
+									onChange={handleInputChange}
+									required
+									disabled={isLoading}
+									min="1"
+									step="1"
+									placeholder="0"
+								/>
+							</div>
+							<div className="flex flex-col gap-1.5">
+								<Label htmlFor="interestRate">
+									Interés (%) <span className="text-red-500">*</span>
+								</Label>
+								<Input
+									id="interestRate"
+									name="interestRate"
+									type="number"
+									value={formData.interestRate}
+									onChange={handleInputChange}
+									required
+									disabled={isLoading}
+									min="0"
+									step="0.01"
+									placeholder="0"
+								/>
+							</div>
+						</div>
+
+						<div className="flex flex-col gap-1.5">
+							<Label htmlFor="creditDate">
+								Fecha de Inicio{" "}
+								<span className="text-muted-foreground font-normal">(opcional)</span>
+							</Label>
+							<DatePicker value={creditDate} onChange={setCreditDate} />
+							{!creditDate && (
+								<p className="text-xs text-muted-foreground">
+									Por defecto se usará la fecha de hoy
+								</p>
+							)}
+						</div>
+
+						<div className="bg-muted rounded-md px-3 py-2.5 grid grid-cols-3 gap-x-2 text-sm">
+							<div>
+								<p className="text-muted-foreground text-xs">Capital</p>
+								<p className="font-medium">{formatCOP(Number(formData.value) || 0)}</p>
+							</div>
+							<div>
+								<p className="text-muted-foreground text-xs">Interés mensual</p>
+								<p className="font-medium">
+									{formatCOP(Math.floor((Number(formData.value) * Number(formData.interestRate)) / 100) || 0)}
+								</p>
+							</div>
+							<div>
+								<p className="text-muted-foreground text-xs">Total</p>
+								<p className="font-semibold">{formatCOP(totalWithInterest)}</p>
+							</div>
+						</div>
 					</div>
 
-					<div className="flex flex-col justify-start gap-2">
-						<Label htmlFor="creditDate">
-							Fecha de Inicio <span className="text-sm text-muted-foreground">(opcional)</span>
-						</Label>
-						<DatePicker value={creditDate} onChange={setCreditDate} />
-						{!creditDate && (
-							<p className="text-xs text-muted-foreground">
-								Por defecto se usará la fecha de hoy
-							</p>
-						)}
+					<div className="px-6 py-4 border-t shrink-0">
+						<Button type="submit" className="w-full" disabled={isLoading}>
+							{isLoading ? "Creando..." : "Crear Crédito"}
+						</Button>
 					</div>
-
-					<div className="bg-muted p-3 rounded-md space-y-1">
-						<p className="text-sm font-medium">
-							Capital: {formatCOP(Number(formData.value) || 0)}
-						</p>
-						<p className="text-sm text-muted-foreground">
-							+ Interés mensual: {formatCOP(Math.floor((Number(formData.value) * Number(formData.interestRate)) / 100) || 0)}
-						</p>
-						<p className="text-sm font-semibold border-t pt-1 mt-1">
-							Total con primer interés: {formatCOP(totalWithInterest)}
-						</p>
-					</div>
-
-					<Button type="submit" className="mt-4" disabled={isLoading}>
-						{isLoading ? "Creando..." : "Crear Crédito"}
-					</Button>
 				</form>
 			</DialogContent>
 		</Dialog>

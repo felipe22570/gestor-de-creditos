@@ -27,7 +27,8 @@ import { Button } from "@/components/ui/button";
 import EditCreditModal from "@/components/modals/edit-credit";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { CircleDollarSign, History, MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { CircleDollarSign, History, MoreHorizontal, Pencil, Printer, Trash } from "lucide-react";
+import PrintInvoiceModal from "@/components/modals/print-invoice-modal";
 import { fetchCreditById } from "@/lib/actions/credit";
 import DeleteCreditModal from "@/components/modals/delete-credit";
 import PaymentModal from "@/components/modals/payment";
@@ -42,7 +43,7 @@ interface Props {
 export default function CreditsDueTable({ data }: Props) {
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [globalFilter, setGlobalFilter] = useState<unknown>([]);
-	const [sorting, setSorting] = useState<SortingState>([]);
+	const [sorting, setSorting] = useState<SortingState>([{ id: "diasAtraso", desc: true }]);
 	const [openEditCreditModal, setOpenEditCreditModal] = useState(false);
 	const [openDeleteCreditModal, setOpenDeleteCreditModal] = useState(false);
 	const [creditToEdit, setCreditToEdit] = useState<Credit | null>(null);
@@ -55,6 +56,8 @@ export default function CreditsDueTable({ data }: Props) {
 	const [creditToPayFull, setCreditToPayFull] = useState<Credit | null>(null);
 	const [openViewPaymentsModal, setOpenViewPaymentsModal] = useState(false);
 	const [creditToViewPayments, setCreditToViewPayments] = useState<Credit | null>(null);
+	const [openPrintInvoiceModal, setOpenPrintInvoiceModal] = useState(false);
+	const [creditToPrint, setCreditToPrint] = useState<Credit | null>(null);
 
 	const columns: ColumnDef<Credit>[] = [
 		{
@@ -100,7 +103,7 @@ export default function CreditsDueTable({ data }: Props) {
 			cell: ({ row }) => {
 				const date = format(new Date(row.getValue("startDate")), "dd/MM/yyyy");
 
-				return <span className="w-3 text-sm font-medium">{date}</span>;
+				return <span className="text-sm font-medium whitespace-nowrap">{date}</span>;
 			},
 			maxSize: 10,
 		},
@@ -112,7 +115,7 @@ export default function CreditsDueTable({ data }: Props) {
 				if (!nextPaymentDate) return <span className="text-sm font-medium">-</span>;
 
 				const date = format(new Date(nextPaymentDate as number), "dd/MM/yyyy");
-				return <span className="w-3 text-sm font-bold text-red-500">{date}</span>;
+				return <span className="text-sm font-bold text-red-500 whitespace-nowrap">{date}</span>;
 			},
 			maxSize: 10,
 		},
@@ -152,15 +155,47 @@ export default function CreditsDueTable({ data }: Props) {
 			},
 		},
 		{
-			accessorKey: "totalAmount",
-			header: "Monto Total",
+			accessorKey: "interestAmount",
+			header: "Monto de Interés",
 			cell: ({ row }) => {
+				const interestAmount = Number(row.getValue("interestAmount"));
+				if (!interestAmount) return <span className="text-sm font-medium">-</span>;
 				const formatted = new Intl.NumberFormat("es-CO", {
 					style: "currency",
 					currency: "COP",
-				}).format(row.getValue("totalAmount"));
+				}).format(interestAmount);
+				return <span className="text-sm font-medium">{formatted}</span>;
+			},
+		},
+		{
+			accessorKey: "totalAmount",
+			header: "Monto Total",
+			cell: ({ row }) => {
+				const totalAmount = Number(row.getValue("totalAmount"));
+				const interestAmount = row.original.interestAmount
+					? Number(row.original.interestAmount)
+					: 0;
+				const formatted = new Intl.NumberFormat("es-CO", {
+					style: "currency",
+					currency: "COP",
+				}).format(totalAmount + interestAmount);
 
 				return <span className="text-sm font-medium">{formatted}</span>;
+			},
+		},
+		{
+			id: "diasAtraso",
+			header: "Días de Atraso",
+			cell: ({ row }) => {
+				const nextPaymentDate = row.original.nextPaymentDate;
+				if (!nextPaymentDate) return <span className="text-sm font-medium">-</span>;
+				const days = Math.floor(
+					(Date.now() - new Date(nextPaymentDate as string | number | Date).getTime()) /
+						(1000 * 60 * 60 * 24)
+				);
+				return (
+					<span className="text-sm font-bold text-red-500">{days} días</span>
+				);
 			},
 		},
 		{
@@ -184,6 +219,13 @@ export default function CreditsDueTable({ data }: Props) {
 							>
 								<Pencil className="mr-2 h-4 w-4" />
 								Editar
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => onPrintInvoice(credit)}
+								className="text-purple-500 cursor-pointer"
+							>
+								<Printer className="mr-2 h-4 w-4" />
+								Imprimir factura
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => onPayCredit(credit)}
@@ -258,6 +300,11 @@ export default function CreditsDueTable({ data }: Props) {
 		setOpenViewPaymentsModal(true);
 	};
 
+	const onPrintInvoice = (credit: Credit) => {
+		setCreditToPrint(credit);
+		setOpenPrintInvoiceModal(true);
+	};
+
 	useEffect(() => {
 		if (!openEditCreditModal) {
 			setCreditToEdit(null);
@@ -293,6 +340,12 @@ export default function CreditsDueTable({ data }: Props) {
 			setCreditToViewPayments(null);
 		}
 	}, [openViewPaymentsModal]);
+
+	useEffect(() => {
+		if (!openPrintInvoiceModal) {
+			setCreditToPrint(null);
+		}
+	}, [openPrintInvoiceModal]);
 
 	const table = useReactTable({
 		data,
@@ -336,7 +389,7 @@ export default function CreditsDueTable({ data }: Props) {
 				<Input
 					placeholder="Buscar..."
 					value={(globalFilter as string) ?? ""}
-					onChange={(event) => setGlobalFilter(event.target.value)}
+					onChange={(event) => table.setGlobalFilter(event.target.value)}
 					className="max-w-sm"
 				/>
 				<DropdownMenu>
@@ -359,7 +412,7 @@ export default function CreditsDueTable({ data }: Props) {
 											column.toggleVisibility(!!value)
 										}
 									>
-										{column.id}
+										{column.columnDef.header as string}
 									</DropdownMenuCheckboxItem>
 								);
 							})}
@@ -437,6 +490,13 @@ export default function CreditsDueTable({ data }: Props) {
 					isOpen={openViewPaymentsModal}
 					setIsOpen={setOpenViewPaymentsModal}
 					credit={creditToViewPayments}
+				/>
+			)}
+			{creditToPrint && (
+				<PrintInvoiceModal
+					isOpen={openPrintInvoiceModal}
+					onClose={() => setOpenPrintInvoiceModal(false)}
+					credit={creditToPrint}
 				/>
 			)}
 		</div>
