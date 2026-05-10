@@ -6,17 +6,22 @@ import {
 	Table,
 	TableBody,
 	TableCell,
+	TableFooter,
 	TableHead,
 	TableHeader,
 	TableRow,
-	TableFooter,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData> {
 	table: ReactTable<TData>;
 	showFooter?: boolean;
 	footerContent?: React.ReactNode;
 }
+
+// Special-case the row-selection column: keep it narrow and don't waste
+// horizontal space on cell padding around a 18px checkbox.
+const selectColumnClass = "w-12 px-3";
 
 export function DataTable<TData>({ table, showFooter = false, footerContent }: DataTableProps<TData>) {
 	return (
@@ -26,18 +31,21 @@ export function DataTable<TData>({ table, showFooter = false, footerContent }: D
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<TableRow key={headerGroup.id}>
-								{headerGroup.headers.map((header) => {
-									return (
-										<TableHead key={header.id}>
-											{header.isPlaceholder
-												? null
-												: flexRender(
-														header.column.columnDef.header,
-														header.getContext()
-												  )}
-										</TableHead>
-									);
-								})}
+								{headerGroup.headers.map((header) => (
+									<TableHead
+										key={header.id}
+										className={cn(
+											header.column.id === "select" && selectColumnClass
+										)}
+									>
+										{header.isPlaceholder
+											? null
+											: flexRender(
+													header.column.columnDef.header,
+													header.getContext()
+											  )}
+									</TableHead>
+								))}
 							</TableRow>
 						))}
 					</TableHeader>
@@ -46,7 +54,12 @@ export function DataTable<TData>({ table, showFooter = false, footerContent }: D
 							table.getRowModel().rows.map((row) => (
 								<TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
 									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id}>
+										<TableCell
+											key={cell.id}
+											className={cn(
+												cell.column.id === "select" && selectColumnClass
+											)}
+										>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext()
