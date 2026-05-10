@@ -1,15 +1,9 @@
 "use client";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Credit, Payment } from "@/types/schema";
-import { useEffect, useState, useCallback } from "react";
 import { format } from "date-fns";
-import { deletePayment, fetchPaymentsByCreditId } from "@/lib/actions/payment";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatCOP } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -21,7 +15,21 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { deletePayment, fetchPaymentsByCreditId } from "@/lib/actions/payment";
+import { formatCOP } from "@/lib/utils";
+import { Credit, Payment } from "@/types/schema";
 
 interface Props {
 	isOpen: boolean;
@@ -29,13 +37,12 @@ interface Props {
 	credit: Credit | null;
 }
 
-const paymentTypes = {
-	CAPITAL: "Capital",
-	INTEREST: "Interés",
-	FULL: "Pago Completo",
+const paymentTypeMeta: Record<string, { label: string; variant: "active" | "warning" | "success" }> = {
+	CAPITAL: { label: "Capital", variant: "active" },
+	INTEREST: { label: "Interés", variant: "warning" },
+	FULL: { label: "Pago Completo", variant: "success" },
 };
 
-// Component for delete button
 function DeletePaymentButton({
 	paymentId,
 	onDeleteSuccess,
@@ -82,6 +89,7 @@ function DeletePaymentButton({
 			<AlertDialogTrigger asChild>
 				<Button variant="ghost" size="icon" className="h-8 w-8">
 					<Trash2 className="h-4 w-4 text-destructive" />
+					<span className="sr-only">Eliminar pago</span>
 				</Button>
 			</AlertDialogTrigger>
 			<AlertDialogContent>
@@ -132,7 +140,6 @@ export default function ViewPaymentsModal({ isOpen, setIsOpen, credit }: Props) 
 	}, [isOpen, loadPayments]);
 
 	const handleDeleteSuccess = () => {
-		// Reload payments after successful deletion
 		loadPayments();
 	};
 
@@ -140,12 +147,14 @@ export default function ViewPaymentsModal({ isOpen, setIsOpen, credit }: Props) 
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogContent className="max-w-3xl">
 				<DialogHeader>
-					<DialogTitle>Historial de Pagos - {credit?.productName}</DialogTitle>
-					<DialogDescription className="sr-only">
-						Lista de todos los pagos registrados para este crédito.
+					<DialogTitle>Historial de pagos</DialogTitle>
+					<DialogDescription>
+						{credit?.productName ?? "Crédito"} ·{" "}
+						<span className="text-foreground">{credit?.clientName}</span>
 					</DialogDescription>
 				</DialogHeader>
-				<div className="mt-4">
+
+				<div className="overflow-hidden rounded-card border border-border">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -154,7 +163,7 @@ export default function ViewPaymentsModal({ isOpen, setIsOpen, credit }: Props) 
 								<TableHead>Cliente</TableHead>
 								<TableHead>Cédula</TableHead>
 								<TableHead>Tipo</TableHead>
-								<TableHead>Acciones</TableHead>
+								<TableHead className="text-right">Acciones</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -178,47 +187,55 @@ export default function ViewPaymentsModal({ isOpen, setIsOpen, credit }: Props) 
 												<Skeleton className="h-4 w-20" />
 											</TableCell>
 											<TableCell>
-												<Skeleton className="h-4 w-10" />
+												<Skeleton className="ml-auto h-4 w-10" />
 											</TableCell>
 										</TableRow>
 									))}
 								</>
+							) : payments.length === 0 ? (
+								<TableRow>
+									<TableCell
+										colSpan={6}
+										className="h-24 text-center text-text-secondary"
+									>
+										No hay pagos registrados
+									</TableCell>
+								</TableRow>
 							) : (
-								<>
-									{payments.map((payment) => (
+								payments.map((payment) => {
+									const meta =
+										paymentTypeMeta[payment.paymentType ?? ""] ?? null;
+
+									return (
 										<TableRow key={`${payment.id}-${payment.startDate}`}>
-											<TableCell>
-												{format(
-													payment.startDate ?? new Date(),
-													"dd/MM/yyyy"
-												)}
+											<TableCell className="whitespace-nowrap font-mono text-small tabular-nums">
+												{format(payment.startDate ?? new Date(), "dd/MM/yyyy")}
 											</TableCell>
-											<TableCell>
+											<TableCell className="font-mono text-small font-semibold tabular-nums">
 												{formatCOP(payment.amountPaid ?? 0)}
 											</TableCell>
 											<TableCell>{payment.clientName}</TableCell>
 											<TableCell>{payment.clientId}</TableCell>
 											<TableCell>
-												{paymentTypes[
-													payment.paymentType as keyof typeof paymentTypes
-												] ?? "Capital"}
+												{meta ? (
+													<Chip variant={meta.variant} size="sm">
+														{meta.label}
+													</Chip>
+												) : (
+													<Chip variant="default" size="sm">
+														Desconocido
+													</Chip>
+												)}
 											</TableCell>
-											<TableCell>
+											<TableCell className="text-right">
 												<DeletePaymentButton
 													paymentId={payment.id}
 													onDeleteSuccess={handleDeleteSuccess}
 												/>
 											</TableCell>
 										</TableRow>
-									))}
-									{payments.length === 0 && (
-										<TableRow>
-											<TableCell colSpan={6} className="text-center">
-												No hay pagos registrados
-											</TableCell>
-										</TableRow>
-									)}
-								</>
+									);
+								})
 							)}
 						</TableBody>
 					</Table>
