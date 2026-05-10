@@ -1,9 +1,11 @@
-import { Checkbox } from "@/components/ui/checkbox";
-import { Payment } from "@/types/schema";
+"use client";
+
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -15,14 +17,18 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { deletePayment } from "@/lib/actions/payment";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Chip } from "@/components/ui/chip";
 import { useToast } from "@/hooks/use-toast";
+import { deletePayment } from "@/lib/actions/payment";
+import { formatCOP } from "@/lib/utils";
+import { Payment } from "@/types/schema";
 
-// Create a separate component for the delete action
 function DeletePaymentButton({ paymentId }: { paymentId: number }) {
 	const [isDeleting, setIsDeleting] = useState(false);
 	const { toast } = useToast();
+	const router = useRouter();
 
 	const handleDelete = async () => {
 		setIsDeleting(true);
@@ -35,8 +41,7 @@ function DeletePaymentButton({ paymentId }: { paymentId: number }) {
 					description: "El pago ha sido eliminado exitosamente.",
 					variant: "default",
 				});
-				// Refresh the page to update the table
-				window.location.reload();
+				router.refresh();
 			} else {
 				toast({
 					title: "Error",
@@ -61,6 +66,7 @@ function DeletePaymentButton({ paymentId }: { paymentId: number }) {
 			<AlertDialogTrigger asChild>
 				<Button variant="ghost" size="icon" className="h-8 w-8">
 					<Trash2 className="h-4 w-4 text-destructive" />
+					<span className="sr-only">Eliminar pago</span>
 				</Button>
 			</AlertDialogTrigger>
 			<AlertDialogContent>
@@ -88,6 +94,12 @@ function DeletePaymentButton({ paymentId }: { paymentId: number }) {
 	);
 }
 
+const paymentTypeMeta: Record<string, { label: string; variant: "active" | "warning" | "success" }> = {
+	CAPITAL: { label: "Capital", variant: "active" },
+	INTEREST: { label: "Interés", variant: "warning" },
+	FULL: { label: "Pago Completo", variant: "success" },
+};
+
 export const columns: ColumnDef<Payment>[] = [
 	{
 		id: "select",
@@ -98,14 +110,14 @@ export const columns: ColumnDef<Payment>[] = [
 					(table.getIsSomePageRowsSelected() && "indeterminate")
 				}
 				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-				aria-label="Select all"
+				aria-label="Seleccionar todo"
 			/>
 		),
 		cell: ({ row }) => (
 			<Checkbox
 				checked={row.getIsSelected()}
 				onCheckedChange={(value) => row.toggleSelected(!!value)}
-				aria-label="Select row"
+				aria-label="Seleccionar fila"
 			/>
 		),
 		enableSorting: false,
@@ -113,73 +125,60 @@ export const columns: ColumnDef<Payment>[] = [
 	},
 	{
 		accessorKey: "startDate",
-		header: ({ column }) => {
-			return (
-				<Button
-					variant="ghost"
-					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-					className="flex items-center gap-1"
-				>
-					Fecha de pago
-					{column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
-				</Button>
-			);
-		},
-		cell: ({ row }) => {
-			const date = format(new Date(row.getValue("startDate")), "dd/MM/yyyy");
-
-			return <span className="text-sm font-medium whitespace-nowrap">{date}</span>;
-		},
-		maxSize: 10,
+		header: ({ column }) => (
+			<Button
+				variant="ghost"
+				size="sm"
+				onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+				className="-ml-3 h-8 px-3 text-overline uppercase font-semibold text-muted-foreground"
+			>
+				Fecha de pago
+				{column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
+			</Button>
+		),
+		cell: ({ row }) => (
+			<span className="whitespace-nowrap font-mono text-small tabular-nums text-foreground">
+				{format(new Date(row.getValue("startDate")), "dd/MM/yyyy")}
+			</span>
+		),
 	},
-	{
-		accessorKey: "clientId",
-		header: "Cédula del cliente",
-	},
-	{
-		accessorKey: "clientName",
-		header: "Nombre del cliente",
-	},
-	{
-		accessorKey: "creditName",
-		header: "Nombre del crédito",
-	},
+	{ accessorKey: "clientId", header: "Cédula del cliente" },
+	{ accessorKey: "clientName", header: "Nombre del cliente" },
+	{ accessorKey: "creditName", header: "Nombre del crédito" },
 	{
 		accessorKey: "amountPaid",
 		header: "Monto abonado",
-		cell: ({ row }) => {
-			const formatted = new Intl.NumberFormat("es-CO", {
-				style: "currency",
-				currency: "COP",
-			}).format(row.getValue("amountPaid"));
-
-			return <span className="text-sm font-medium">{formatted}</span>;
-		},
+		cell: ({ row }) => (
+			<span className="font-mono text-small font-semibold tabular-nums text-foreground">
+				{formatCOP(Number(row.getValue("amountPaid")))}
+			</span>
+		),
 	},
 	{
 		accessorKey: "paymentType",
 		header: "Tipo de pago",
 		cell: ({ row }) => {
-			const paymentType = row.getValue("paymentType");
-			const paymentTypes = {
-				CAPITAL: "Capital",
-				INTEREST: "Interés",
-				FULL: "Pago Completo",
-			};
+			const paymentType = String(row.getValue("paymentType") ?? "");
+			const meta = paymentTypeMeta[paymentType];
+
+			if (!meta) {
+				return (
+					<Chip variant="default" size="sm">
+						Desconocido
+					</Chip>
+				);
+			}
 
 			return (
-				<span className="text-sm font-medium">
-					{paymentTypes[paymentType as keyof typeof paymentTypes] ?? "Desconocido"}
-				</span>
+				<Chip variant={meta.variant} size="sm">
+					{meta.label}
+				</Chip>
 			);
 		},
 	},
 	{
 		id: "actions",
 		header: "Acciones",
-		cell: ({ row }) => {
-			const payment = row.original;
-			return <DeletePaymentButton paymentId={payment.id} />;
-		},
+		cell: ({ row }) => <DeletePaymentButton paymentId={row.original.id} />,
 	},
 ];

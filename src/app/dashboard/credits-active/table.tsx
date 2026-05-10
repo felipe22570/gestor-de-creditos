@@ -1,43 +1,53 @@
 "use client";
 
-import { DataTable } from "@/components/ui/data-table";
-import { Input } from "@/components/ui/input";
-// import { columns } from "./columns";
-import { Credit } from "@/types/schema";
 import {
 	ColumnDef,
 	getCoreRowModel,
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
+	SortingState,
 	useReactTable,
 	VisibilityState,
-	SortingState,
 } from "@tanstack/react-table";
+import { format } from "date-fns";
+import {
+	CircleDollarSign,
+	History,
+	MoreHorizontal,
+	Pencil,
+	Printer,
+	Search,
+	Trash,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
+import DeleteCreditModal from "@/components/modals/delete-credit";
+import EditCreditModal from "@/components/modals/edit-credit";
+import PaymentFullModal from "@/components/modals/payment-full";
+import PaymentInterestModal from "@/components/modals/payment-interest";
+import PaymentModal from "@/components/modals/payment";
+import PrintInvoiceModal from "@/components/modals/print-invoice-modal";
+import StatCard from "@/components/dashboard/stat-card";
+import ViewPaymentsModal from "@/components/modals/view-payments";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Chip } from "@/components/ui/chip";
+import { DataTable } from "@/components/ui/data-table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
-	DropdownMenuTrigger,
 	DropdownMenuItem,
 	DropdownMenuLabel,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import EditCreditModal from "@/components/modals/edit-credit";
-import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
-import { CircleDollarSign, History, MoreHorizontal, Pencil, Printer, Trash } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { fetchCreditById } from "@/lib/actions/credit";
-import DeleteCreditModal from "@/components/modals/delete-credit";
-import PaymentModal from "@/components/modals/payment";
-import ViewPaymentsModal from "@/components/modals/view-payments";
-import PaymentInterestModal from "@/components/modals/payment-interest";
-import PaymentFullModal from "@/components/modals/payment-full";
-import PrintInvoiceModal from "@/components/modals/print-invoice-modal";
-import { cn } from "@/lib/utils";
-import { TableRow, TableCell } from "@/components/ui/table";
+import { cn, formatCOP } from "@/lib/utils";
+import { Credit } from "@/types/schema";
 
 interface Props {
 	data: Credit[];
@@ -71,14 +81,14 @@ export default function CreditsActiveTable({ data }: Props) {
 						(table.getIsSomePageRowsSelected() && "indeterminate")
 					}
 					onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-					aria-label="Select all"
+					aria-label="Seleccionar todo"
 				/>
 			),
 			cell: ({ row }) => (
 				<Checkbox
 					checked={row.getIsSelected()}
 					onCheckedChange={(value) => row.toggleSelected(!!value)}
-					aria-label="Select row"
+					aria-label="Seleccionar fila"
 				/>
 			),
 			enableSorting: false,
@@ -86,78 +96,58 @@ export default function CreditsActiveTable({ data }: Props) {
 		},
 		{
 			accessorKey: "startDate",
-			header: ({ column }) => {
-				return (
-					<Button
-						variant="ghost"
-						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-						className="flex items-center gap-1"
-					>
-						Fecha
-						{column.getIsSorted() === "asc"
-							? " ↑"
-							: column.getIsSorted() === "desc"
-							? " ↓"
-							: ""}
-					</Button>
-				);
-			},
-			cell: ({ row }) => {
-				const date = format(new Date(row.getValue("startDate")), "dd/MM/yyyy");
-
-				return <span className="text-sm font-medium whitespace-nowrap">{date}</span>;
-			},
-			maxSize: 10,
+			header: ({ column }) => (
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					className="-ml-3 h-8 px-3 text-overline uppercase font-semibold text-muted-foreground"
+				>
+					Fecha
+					{column.getIsSorted() === "asc"
+						? " ↑"
+						: column.getIsSorted() === "desc"
+						? " ↓"
+						: ""}
+				</Button>
+			),
+			cell: ({ row }) => (
+				<span className="whitespace-nowrap font-mono text-small tabular-nums text-foreground">
+					{format(new Date(row.getValue("startDate")), "dd/MM/yyyy")}
+				</span>
+			),
 		},
-		{
-			accessorKey: "clientCardId",
-			header: "Cédula",
-		},
-		{
-			accessorKey: "clientName",
-			header: "Nombre",
-		},
-		{
-			accessorKey: "clientPhone",
-			header: "Teléfono",
-		},
-		{
-			accessorKey: "productName",
-			header: "Producto",
-		},
+		{ accessorKey: "clientCardId", header: "Cédula" },
+		{ accessorKey: "clientName", header: "Nombre" },
+		{ accessorKey: "clientPhone", header: "Teléfono" },
+		{ accessorKey: "productName", header: "Producto" },
 		{
 			accessorKey: "initialAmount",
 			header: "Monto Inicial",
-			cell: ({ row }) => {
-				const formatted = new Intl.NumberFormat("es-CO", {
-					style: "currency",
-					currency: "COP",
-				}).format(row.getValue("initialAmount"));
-
-				return <span className="text-sm font-medium">{formatted}</span>;
-			},
+			cell: ({ row }) => (
+				<span className="font-mono text-small font-medium tabular-nums text-foreground">
+					{formatCOP(Number(row.getValue("initialAmount")))}
+				</span>
+			),
 		},
 		{
 			accessorKey: "interestRate",
 			header: "Tasa",
-			cell: ({ row }) => {
-				return <span className="text-sm font-medium">{row.getValue("interestRate")}%</span>;
-			},
+			cell: ({ row }) => (
+				<span className="text-small font-medium text-foreground">{row.getValue("interestRate")}%</span>
+			),
 		},
 		{
 			accessorKey: "interestAmount",
 			header: "Monto de Interés",
 			cell: ({ row }) => {
-				const amount = row.getValue("interestAmount")
-					? Number(row.getValue("interestAmount"))
-					: 0;
-
-				const formatted = new Intl.NumberFormat("es-CO", {
-					style: "currency",
-					currency: "COP",
-				}).format(amount);
-
-				return <span className="text-sm font-medium">{amount ? formatted : ""}</span>;
+				const amount = row.getValue("interestAmount") ? Number(row.getValue("interestAmount")) : 0;
+				if (!amount) return <span className="text-small text-text-secondary">—</span>;
+				return (
+					<span className="font-mono text-small font-medium tabular-nums text-foreground">
+						{formatCOP(amount)}
+					</span>
+				);
 			},
 		},
 		{
@@ -168,15 +158,12 @@ export default function CreditsActiveTable({ data }: Props) {
 				const interestAmount = row.getValue("interestAmount")
 					? Number(row.getValue("interestAmount"))
 					: 0;
-
-				const total = interestAmount ? totalAmount + interestAmount : totalAmount;
-
-				const formatted = new Intl.NumberFormat("es-CO", {
-					style: "currency",
-					currency: "COP",
-				}).format(total);
-
-				return <span className="text-sm font-medium">{formatted}</span>;
+				const total = totalAmount + interestAmount;
+				return (
+					<span className="font-mono text-small font-semibold tabular-nums text-foreground">
+						{formatCOP(total)}
+					</span>
+				);
 			},
 		},
 		{
@@ -184,31 +171,23 @@ export default function CreditsActiveTable({ data }: Props) {
 			header: "Próximo Pago",
 			cell: ({ row }) => {
 				const nextPaymentDate = row.getValue("nextPaymentDate");
-
 				if (!nextPaymentDate) {
-					return <span className="text-sm font-medium">No establecido</span>;
+					return <span className="text-small text-text-secondary">No establecido</span>;
 				}
-
 				const paymentDate = new Date(nextPaymentDate as string | number);
 				const currentDate = new Date();
-
-				// Remove time part for date comparison
 				currentDate.setHours(0, 0, 0, 0);
-
 				const isOverdue = paymentDate < currentDate;
 
 				return (
-					// suppressHydrationWarning: server (UTC) and client (UTC-5 Colombia) can
-					// disagree on "today" near midnight, causing a benign class mismatch.
-					<span
-						suppressHydrationWarning
-						className={cn(
-							"text-sm font-bold",
-							isOverdue ? "text-red-600" : "text-green-600"
-						)}
-					>
-						{format(paymentDate, "dd/MM/yyyy")}
-					</span>
+					<div suppressHydrationWarning className="flex items-center gap-2 whitespace-nowrap">
+						<span className="font-mono text-small font-medium tabular-nums text-foreground">
+							{format(paymentDate, "dd/MM/yyyy")}
+						</span>
+						<Chip variant={isOverdue ? "overdue" : "ontrack"} size="sm">
+							{isOverdue ? "Vencido" : "Al día"}
+						</Chip>
+					</div>
 				);
 			},
 		},
@@ -216,64 +195,54 @@ export default function CreditsActiveTable({ data }: Props) {
 			id: "actions",
 			cell: ({ row }) => {
 				const credit = row.original;
-
 				return (
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" className="h-8 w-8 p-0">
-								<span className="sr-only">Open menu</span>
+							<Button variant="ghost" size="icon" className="h-8 w-8">
+								<span className="sr-only">Abrir menú</span>
 								<MoreHorizontal className="h-4 w-4" />
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
 							<DropdownMenuLabel>Acciones</DropdownMenuLabel>
-							<DropdownMenuItem
-								onClick={() => onViewPayments(credit)}
-								className="cursor-pointer text-gray-700"
-							>
-								<History className="mr-2 h-4 w-4" />
+							<DropdownMenuItem onClick={() => onViewPayments(credit)} className="cursor-pointer">
+								<History className="mr-2 h-4 w-4 text-muted-foreground" />
 								Ver pagos
 							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => onPrintInvoice(credit)}
-								className="cursor-pointer text-purple-700"
-							>
-								<Printer className="mr-2 h-4 w-4" />
+							<DropdownMenuItem onClick={() => onPrintInvoice(credit)} className="cursor-pointer">
+								<Printer className="mr-2 h-4 w-4 text-muted-foreground" />
 								Imprimir factura
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => onPayCredit(credit, "CAPITAL")}
-								className="cursor-pointer text-green-700"
+								className="cursor-pointer"
 							>
-								<CircleDollarSign className="mr-2 h-4 w-4" />
+								<CircleDollarSign className="mr-2 h-4 w-4 text-success" />
 								Abonar a capital
 							</DropdownMenuItem>
 							{Number(credit.interestAmount) > 0 && (
 								<DropdownMenuItem
 									onClick={() => onPayCredit(credit, "INTEREST")}
-									className="cursor-pointer text-emerald-600"
+									className="cursor-pointer"
 								>
-									<CircleDollarSign className="mr-2 h-4 w-4" />
+									<CircleDollarSign className="mr-2 h-4 w-4 text-warning" />
 									Abonar interés
 								</DropdownMenuItem>
 							)}
-							<DropdownMenuItem
-								onClick={() => onPayFull(credit)}
-								className="cursor-pointer text-green-800"
-							>
-								<CircleDollarSign className="mr-2 h-4 w-4" />
+							<DropdownMenuItem onClick={() => onPayFull(credit)} className="cursor-pointer">
+								<CircleDollarSign className="mr-2 h-4 w-4 text-success" />
 								Pagar completo
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => onEditCredit(credit.id)}
-								className="text-blue-600 cursor-pointer"
+								className="cursor-pointer"
 							>
-								<Pencil className="mr-2 h-4 w-4" />
+								<Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
 								Editar
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => onDeleteCredit(credit.id)}
-								className="text-red-500 cursor-pointer"
+								className="cursor-pointer text-destructive focus:text-destructive"
 							>
 								<Trash className="mr-2 h-4 w-4" />
 								Borrar
@@ -287,67 +256,47 @@ export default function CreditsActiveTable({ data }: Props) {
 
 	const onEditCredit = async (creditId: number) => {
 		const credit = await fetchCreditById(creditId);
-
 		if (credit) {
 			setCreditToEdit(credit);
 			setOpenEditCreditModal(true);
 		}
 	};
-
 	const onDeleteCredit = async (creditId: number) => {
 		setCreditToDelete(creditId);
 		setOpenDeleteCreditModal(true);
 	};
-
 	const onPayCredit = async (credit: Credit, type: "CAPITAL" | "INTEREST") => {
 		setCreditToPay(credit);
 		setOpenPaymentModal(true);
 		setPaymentType(type);
 	};
-
 	const onViewPayments = (credit: Credit) => {
 		setCreditToViewPayments(credit);
 		setOpenViewPaymentsModal(true);
 	};
-
 	const onPrintInvoice = (credit: Credit) => {
 		setCreditToPrint(credit);
 		setOpenPrintInvoiceModal(true);
 	};
-
 	const onPayFull = (credit: Credit) => {
 		setCreditToPayFull(credit);
 		setOpenPaymentFullModal(true);
 	};
 
 	useEffect(() => {
-		if (!openEditCreditModal) {
-			setCreditToEdit(null);
-		}
+		if (!openEditCreditModal) setCreditToEdit(null);
 	}, [openEditCreditModal]);
-
 	useEffect(() => {
-		if (!openDeleteCreditModal) {
-			setCreditToDelete(null);
-		}
+		if (!openDeleteCreditModal) setCreditToDelete(null);
 	}, [openDeleteCreditModal]);
-
 	useEffect(() => {
-		if (!openPaymentModal) {
-			setCreditToPay(null);
-		}
+		if (!openPaymentModal) setCreditToPay(null);
 	}, [openPaymentModal]);
-
 	useEffect(() => {
-		if (!openViewPaymentsModal) {
-			setCreditToViewPayments(null);
-		}
+		if (!openViewPaymentsModal) setCreditToViewPayments(null);
 	}, [openViewPaymentsModal]);
-
 	useEffect(() => {
-		if (!openPaymentFullModal) {
-			setCreditToPayFull(null);
-		}
+		if (!openPaymentFullModal) setCreditToPayFull(null);
 	}, [openPaymentFullModal]);
 
 	const table = useReactTable({
@@ -359,65 +308,53 @@ export default function CreditsActiveTable({ data }: Props) {
 		getSortedRowModel: getSortedRowModel(),
 		onColumnVisibilityChange: setColumnVisibility,
 		onSortingChange: setSorting,
-		state: {
-			columnVisibility,
-			globalFilter,
-			sorting,
-		},
+		state: { columnVisibility, globalFilter, sorting },
 		onGlobalFilterChange: setGlobalFilter,
 	});
 
-	// Calculate subtotal of total amounts for currently displayed rows
 	const rows = table.getRowModel().rows;
-	const subtotal = useMemo(() => {
-		return rows.reduce((sum, row) => {
-			const credit = row.original;
-			const totalAmount = Number(credit.totalAmount) ?? 0;
-			const interestAmount = credit.interestAmount ? Number(credit.interestAmount) : 0;
-			const total = interestAmount ? totalAmount + interestAmount : totalAmount;
-			return sum + total;
-		}, 0);
-	}, [rows]);
+	const subtotal = useMemo(
+		() =>
+			rows.reduce((sum, row) => {
+				const credit = row.original;
+				const totalAmount = Number(credit.totalAmount) ?? 0;
+				const interestAmount = credit.interestAmount ? Number(credit.interestAmount) : 0;
+				return sum + totalAmount + interestAmount;
+			}, 0),
+		[rows]
+	);
 
-	// Calculate totals for all data (not just filtered)
 	const totals = useMemo(() => {
-		const initialAmountTotal = data.reduce((sum, credit) => {
-			return sum + (Number(credit.initialAmount) ?? 0);
-		}, 0);
-
+		const initialAmountTotal = data.reduce(
+			(sum, credit) => sum + (Number(credit.initialAmount) ?? 0),
+			0
+		);
 		const totalAmountTotal = data.reduce((sum, credit) => {
 			const totalAmount = Number(credit.totalAmount) ?? 0;
 			const interestAmount = credit.interestAmount ? Number(credit.interestAmount) : 0;
-			const total = interestAmount ? totalAmount + interestAmount : totalAmount;
-			return sum + total;
+			return sum + totalAmount + interestAmount;
 		}, 0);
-
-		return {
-			initialAmount: initialAmountTotal,
-			totalAmount: totalAmountTotal,
-		};
+		return { initialAmount: initialAmountTotal, totalAmount: totalAmountTotal };
 	}, [data]);
 
-	// Create footer content
 	const visibleColumns = table.getVisibleLeafColumns();
 	const footerContent = useMemo(() => {
 		const totalAmountColumnIndex = visibleColumns.findIndex((col) => col.id === "totalAmount");
 
 		return (
-			<TableRow className="bg-muted/50 h-12">
+			<TableRow className="bg-muted/40 hover:bg-muted/40">
 				{visibleColumns.map((column, index) => (
 					<TableCell
 						key={column.id}
-						className={cn("font-semibold", index === 0 ? "text-left px-5" : "")}
+						className={cn("font-semibold", index === 0 ? "text-left" : "")}
 					>
 						{index === 0 ? (
-							<span className="text-sm font-semibold">Subtotal:</span>
+							<span className="text-overline uppercase tracking-wide text-text-secondary">
+								Subtotal
+							</span>
 						) : index === totalAmountColumnIndex ? (
-							<span className="text-sm font-semibold">
-								{new Intl.NumberFormat("es-CO", {
-									style: "currency",
-									currency: "COP",
-								}).format(subtotal)}
+							<span className="font-mono text-small font-semibold tabular-nums text-foreground">
+								{formatCOP(subtotal)}
 							</span>
 						) : (
 							""
@@ -430,69 +367,55 @@ export default function CreditsActiveTable({ data }: Props) {
 
 	return (
 		<div>
-			<div className="flex justify-between mt-10 mb-5">
-				<Input
-					type="text"
-					placeholder="Buscar..."
-					onChange={(e) => table.setGlobalFilter(String(e.target.value))}
-					className="w-1/3"
+			<section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+				<StatCard
+					label="Total Monto Inicial"
+					value={formatCOP(totals.initialAmount)}
+					tone="info"
+					hint={`${data.length} créditos en cartera`}
 				/>
+				<StatCard
+					label="Total Monto Restante"
+					value={formatCOP(totals.totalAmount)}
+					tone="success"
+					hint="Capital + interés pendiente"
+				/>
+			</section>
+
+			<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<div className="relative w-full sm:max-w-sm">
+					<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+					<Input
+						type="text"
+						placeholder="Buscar..."
+						onChange={(e) => table.setGlobalFilter(String(e.target.value))}
+						className="pl-9 rounded-card"
+					/>
+				</div>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<Button variant="outline" className="ml-auto">
-							Columnas
-						</Button>
+						<Button variant="secondary">Columnas</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
 						{table
 							.getAllColumns()
 							.filter((column) => column.getCanHide())
-							.map((column) => {
-								return (
-									<DropdownMenuCheckboxItem
-										key={column.id}
-										className="capitalize"
-										checked={column.getIsVisible()}
-										onCheckedChange={(value) =>
-											column.toggleVisibility(!!value)
-										}
-									>
-										{column.columnDef.header as string}
-									</DropdownMenuCheckboxItem>
-								);
-							})}
+							.map((column) => (
+								<DropdownMenuCheckboxItem
+									key={column.id}
+									className="capitalize"
+									checked={column.getIsVisible()}
+									onCheckedChange={(value) => column.toggleVisibility(!!value)}
+								>
+									{column.columnDef.header as string}
+								</DropdownMenuCheckboxItem>
+							))}
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
 
-			{/* Summary Section */}
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-muted/30 rounded-lg border">
-				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
-					<h3 className="text-sm font-medium text-muted-foreground mb-1">
-						Total Monto Inicial
-					</h3>
-					<p className="text-2xl font-bold text-blue-600">
-						{new Intl.NumberFormat("es-CO", {
-							style: "currency",
-							currency: "COP",
-						}).format(totals.initialAmount)}
-					</p>
-				</div>
-				<div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border">
-					<h3 className="text-sm font-medium text-muted-foreground mb-1">
-						Total Monto Restante
-					</h3>
-					<p className="text-2xl font-bold text-green-600">
-						{new Intl.NumberFormat("es-CO", {
-							style: "currency",
-							currency: "COP",
-						}).format(totals.totalAmount)}
-					</p>
-				</div>
-			</div>
-
-			<div className="flex flex-col gap-5">
-				<DataTable table={table} showFooter={true} footerContent={footerContent} />
+			<div className="mt-4 flex flex-col gap-4">
+				<DataTable table={table} showFooter footerContent={footerContent} />
 				<DataTablePagination table={table} />
 			</div>
 
@@ -503,7 +426,6 @@ export default function CreditsActiveTable({ data }: Props) {
 					credit={creditToEdit}
 				/>
 			)}
-
 			{creditToDelete && (
 				<DeleteCreditModal
 					isOpen={openDeleteCreditModal}
@@ -511,7 +433,6 @@ export default function CreditsActiveTable({ data }: Props) {
 					creditId={creditToDelete}
 				/>
 			)}
-
 			{creditToPay && paymentType === "CAPITAL" && (
 				<PaymentModal
 					isOpen={openPaymentModal}
