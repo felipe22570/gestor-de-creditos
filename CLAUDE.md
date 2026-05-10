@@ -244,6 +244,16 @@ TypeScript with strict mode enabled. Key type locations:
   - `cn()` for conditional className merging
   - `formatCOP()` for Colombian Peso currency formatting
 
+**Design system reference**: See `DESIGN.md` at the repo root for the canonical UI specification — colors, typography (General Sans / DM Sans / JetBrains Mono), elevation, component variants, spacing scale, border radii, and do's/don'ts. Consult it before introducing UI changes or new components.
+
+**Tailwind tokens (configured in `tailwind.config.ts` + `src/app/globals.css`)** — always prefer these over hardcoded utilities:
+
+- **Colors**: `bg-background` (#FAFAFA page), `bg-surface` (#FFFFFF cards), `text-foreground` (#0A0A0A primary), `text-text-secondary` (#6B6B6B descriptions), `text-muted-foreground` (#9C9C9C metadata), `bg-primary` / `text-primary` / `bg-primary-hover` (indigo #6366F1), `bg-success` / `bg-warning` / `bg-destructive` (semantic status). **Never** use raw `text-red-500` / `text-green-700` etc. — use semantic tokens.
+- **Fonts**: `font-display` (General Sans, headings), `font-sans` (DM Sans, body — applied on `<body>` by default), `font-mono` (JetBrains Mono, code/numbers).
+- **Type scale**: `text-overline` (11px uppercase), `text-caption` (12px), `text-small` (13px), `text-body` (15px), `text-subhead` (24px), `text-section` (32px), `text-headline` (60px), `text-display` (72px).
+- **Radius**: `rounded-chip` (4px tags/badges), shadcn aliases (`rounded-md` / `rounded-lg` ≈ 6px buttons/inputs), `rounded-panel` (8px dropdowns/dialogs), `rounded-card` (12px kit cards / search bar), `rounded-full` (avatars/pills).
+- **Shadow**: `shadow-card-hover` (hover lift on cards), `shadow-primary-glow` (primary button hover), `shadow-focus-ring` (3px indigo ring on focus).
+
 ## Next.js 15+/16 Breaking Changes
 
 - **`params` and `searchParams` are async** in pages and layouts — always `await` them:

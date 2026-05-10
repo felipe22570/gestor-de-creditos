@@ -1,24 +1,22 @@
+import PageHeader from "@/components/dashboard/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PaymentsLoading() {
 	return (
-		<div className="w-full">
-			<h1 className="text-3xl my-3">
-				<Skeleton className="h-9 w-48" />
-			</h1>
-
-			<div className="rounded-md border">
-				{/* Table header skeleton */}
-				<div className="border-b px-4 py-3 bg-muted/50">
-					<Skeleton className="h-6 w-full" />
-				</div>
-
-				{/* Table rows skeleton */}
-				{[...Array(5)].map((_, index) => (
-					<div key={index} className="border-b px-4 py-4">
-						<Skeleton className="h-5 w-full" />
-					</div>
-				))}
+		<div>
+			<PageHeader
+				title="Abonos Realizados"
+				description="Historial de pagos de capital, interés y completos."
+			/>
+			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+				<Skeleton className="h-28 w-full rounded-card" />
+				<Skeleton className="h-28 w-full rounded-card" />
+				<Skeleton className="h-28 w-full rounded-card" />
+				<Skeleton className="h-28 w-full rounded-card" />
+			</div>
+			<div className="mt-8 space-y-4">
+				<Skeleton className="h-10 w-full max-w-sm" />
+				<Skeleton className="h-96 w-full rounded-card" />
 			</div>
 		</div>
 	);

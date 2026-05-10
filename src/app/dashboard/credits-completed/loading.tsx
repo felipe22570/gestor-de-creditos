@@ -1,12 +1,20 @@
+import PageHeader from "@/components/dashboard/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
 	return (
-		<div className="w-full">
-			<h1 className="text-3xl my-3">Créditos Completados</h1>
-			<div className="space-y-4">
-				<Skeleton className="h-10 w-full" />
-				<Skeleton className="h-96 w-full" />
+		<div>
+			<PageHeader
+				title="Créditos Completados"
+				description="Créditos pagados en su totalidad."
+			/>
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+				<Skeleton className="h-28 w-full rounded-card" />
+				<Skeleton className="h-28 w-full rounded-card" />
+			</div>
+			<div className="mt-8 space-y-4">
+				<Skeleton className="h-10 w-full max-w-sm" />
+				<Skeleton className="h-96 w-full rounded-card" />
 			</div>
 		</div>
 	);

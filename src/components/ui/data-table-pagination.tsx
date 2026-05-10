@@ -15,13 +15,13 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({ table }: DataTablePaginationProps<TData>) {
 	return (
 		<div className="flex items-center justify-between px-2">
-			<div className="flex-1 text-sm text-muted-foreground">
+			<div className="flex-1 text-small text-text-secondary">
 				{table.getFilteredSelectedRowModel().rows.length} de{" "}
 				{table.getFilteredRowModel().rows.length} fila(s) seleccionada.
 			</div>
 			<div className="flex items-center space-x-6 lg:space-x-8">
 				<div className="flex items-center space-x-2">
-					<p className="text-sm font-medium">Elementos por página</p>
+					<p className="text-small font-medium text-text-secondary">Elementos por página</p>
 					<Select
 						value={`${table.getState().pagination.pageSize}`}
 						onValueChange={(value) => {
@@ -40,22 +40,24 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
 						</SelectContent>
 					</Select>
 				</div>
-				<div className="flex w-[100px] items-center justify-center text-sm font-medium">
+				<div className="flex w-[120px] items-center justify-center text-small font-medium text-text-secondary">
 					Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
 				</div>
 				<div className="flex items-center space-x-2">
 					<Button
-						variant="outline"
-						className="hidden h-8 w-8 p-0 lg:flex"
+						variant="secondary"
+						size="icon"
+						className="hidden h-8 w-8 lg:flex"
 						onClick={() => table.setPageIndex(0)}
 						disabled={!table.getCanPreviousPage()}
 					>
-						<span className="sr-only">Ir a primer página</span>
+						<span className="sr-only">Ir a primer página</span>
 						<DoubleArrowLeftIcon className="h-4 w-4" />
 					</Button>
 					<Button
-						variant="outline"
-						className="h-8 w-8 p-0"
+						variant="secondary"
+						size="icon"
+						className="h-8 w-8"
 						onClick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
 					>
@@ -63,8 +65,9 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
 						<ChevronLeftIcon className="h-4 w-4" />
 					</Button>
 					<Button
-						variant="outline"
-						className="h-8 w-8 p-0"
+						variant="secondary"
+						size="icon"
+						className="h-8 w-8"
 						onClick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
 					>
@@ -72,8 +75,9 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
 						<ChevronRightIcon className="h-4 w-4" />
 					</Button>
 					<Button
-						variant="outline"
-						className="hidden h-8 w-8 p-0 lg:flex"
+						variant="secondary"
+						size="icon"
+						className="hidden h-8 w-8 lg:flex"
 						onClick={() => table.setPageIndex(table.getPageCount() - 1)}
 						disabled={!table.getCanNextPage()}
 					>

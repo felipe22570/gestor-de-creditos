@@ -1,19 +1,28 @@
 "use client";
 
+import { Download, Printer, Usb } from "lucide-react";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { formatCOP } from "@/lib/utils";
 import {
 	generatePosInvoice,
+	printAsText,
 	printToThermalPrinter,
 	printViaSystemDialog,
-	printAsText,
 } from "@/lib/utils/print-invoice";
-import { Printer, Download, Usb } from "lucide-react";
 
 interface Credit {
 	id: number;
@@ -120,57 +129,49 @@ export default function PrintInvoiceModal({ isOpen, onClose, credit }: PrintInvo
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-[500px]">
+			<DialogContent className="sm:max-w-[520px]">
 				<DialogHeader>
-					<DialogTitle>Imprimir Factura</DialogTitle>
+					<DialogTitle>Imprimir factura</DialogTitle>
 					<DialogDescription>
-						Seleccione el método de impresión para la factura del crédito #{credit.id}
+						Selecciona el método de impresión para la factura del crédito #{credit.id}
 					</DialogDescription>
 				</DialogHeader>
 
 				<div className="space-y-6">
-					{/* Información del negocio */}
-					<div className="space-y-4">
-						<h4 className="text-sm font-medium">Información del Negocio</h4>
-						<div className="grid gap-3">
-							<div>
-								<Label htmlFor="business-name">Nombre del Negocio</Label>
+					<div className="space-y-3">
+						<h4 className="text-overline font-semibold uppercase text-muted-foreground">
+							Información del negocio
+						</h4>
+						<div className="space-y-3">
+							<div className="space-y-1.5">
+								<Label htmlFor="business-name">Nombre del negocio</Label>
 								<Input
 									id="business-name"
 									value={businessInfo.name}
 									onChange={(e) =>
-										setBusinessInfo((prev) => ({
-											...prev,
-											name: e.target.value,
-										}))
+										setBusinessInfo((prev) => ({ ...prev, name: e.target.value }))
 									}
 									placeholder="Nombre de su negocio"
 								/>
 							</div>
-							<div>
+							<div className="space-y-1.5">
 								<Label htmlFor="business-phone">Teléfono</Label>
 								<Input
 									id="business-phone"
 									value={businessInfo.phone}
 									onChange={(e) =>
-										setBusinessInfo((prev) => ({
-											...prev,
-											phone: e.target.value,
-										}))
+										setBusinessInfo((prev) => ({ ...prev, phone: e.target.value }))
 									}
 									placeholder="Teléfono del negocio"
 								/>
 							</div>
-							<div>
+							<div className="space-y-1.5">
 								<Label htmlFor="business-address">Dirección</Label>
 								<Input
 									id="business-address"
 									value={businessInfo.address}
 									onChange={(e) =>
-										setBusinessInfo((prev) => ({
-											...prev,
-											address: e.target.value,
-										}))
+										setBusinessInfo((prev) => ({ ...prev, address: e.target.value }))
 									}
 									placeholder="Dirección del negocio"
 								/>
@@ -180,52 +181,52 @@ export default function PrintInvoiceModal({ isOpen, onClose, credit }: PrintInvo
 
 					<Separator />
 
-					{/* Opciones de impresión */}
-					<div className="space-y-4">
-						<h4 className="text-sm font-medium">Opciones de Impresión</h4>
+					<div className="space-y-3">
+						<h4 className="text-overline font-semibold uppercase text-muted-foreground">
+							Opciones de impresión
+						</h4>
 
 						<div className="grid gap-3">
-							{/* Impresión térmica directa */}
 							<Button
 								onClick={handlePrintThermal}
 								disabled={isLoading}
-								className="w-full justify-start h-auto p-4"
-								variant="outline"
+								className="h-auto w-full justify-start p-4"
+								variant="secondary"
 							>
-								<Usb className="mr-3 h-5 w-5" />
+								<Usb className="mr-3 h-5 w-5 text-primary" />
 								<div className="text-left">
-									<div className="font-medium">Impresora Térmica (USB/Serial)</div>
-									<div className="text-xs text-muted-foreground">
+									<div className="font-medium text-foreground">
+										Impresora térmica (USB/Serial)
+									</div>
+									<div className="text-caption text-text-secondary">
 										Conectar directamente a impresora POS
 									</div>
 								</div>
 							</Button>
 
-							{/* Impresión tradicional */}
 							<Button
 								onClick={handlePrintText}
-								className="w-full justify-start h-auto p-4"
-								variant="outline"
+								className="h-auto w-full justify-start p-4"
+								variant="secondary"
 							>
-								<Printer className="mr-3 h-5 w-5" />
+								<Printer className="mr-3 h-5 w-5 text-primary" />
 								<div className="text-left">
-									<div className="font-medium">Impresión Tradicional</div>
-									<div className="text-xs text-muted-foreground">
+									<div className="font-medium text-foreground">Impresión tradicional</div>
+									<div className="text-caption text-text-secondary">
 										Usar impresora del sistema (papel A4)
 									</div>
 								</div>
 							</Button>
 
-							{/* Descargar archivo */}
 							<Button
 								onClick={handleDownloadBuffer}
-								className="w-full justify-start h-auto p-4"
-								variant="outline"
+								className="h-auto w-full justify-start p-4"
+								variant="secondary"
 							>
-								<Download className="mr-3 h-5 w-5" />
+								<Download className="mr-3 h-5 w-5 text-primary" />
 								<div className="text-left">
-									<div className="font-medium">Descargar Archivo</div>
-									<div className="text-xs text-muted-foreground">
+									<div className="font-medium text-foreground">Descargar archivo</div>
+									<div className="text-caption text-text-secondary">
 										Archivo .bin para software de impresión POS
 									</div>
 								</div>
@@ -233,31 +234,30 @@ export default function PrintInvoiceModal({ isOpen, onClose, credit }: PrintInvo
 						</div>
 					</div>
 
-					{/* Información del crédito a imprimir */}
-					<div className="bg-gray-50 p-4 rounded-lg">
-						<h5 className="text-sm font-medium mb-2">Vista Previa</h5>
-						<div className="text-xs space-y-1 text-gray-600">
-							<p>
-								<strong>Cliente:</strong> {credit.clientName}
-							</p>
-							<p>
-								<strong>Producto:</strong> {credit.productName}
-							</p>
-							<p>
-								<strong>Monto:</strong> ${credit.totalAmount.toLocaleString("es-CO")}
-							</p>
-							<p>
-								<strong>Tasa:</strong> {credit.interestRate}%
-							</p>
-						</div>
+					<div className="rounded-panel bg-muted px-4 py-3">
+						<h5 className="mb-2 text-overline font-semibold uppercase text-muted-foreground">
+							Vista previa
+						</h5>
+						<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-small">
+							<dt className="font-medium text-text-secondary">Cliente:</dt>
+							<dd className="text-foreground">{credit.clientName}</dd>
+							<dt className="font-medium text-text-secondary">Producto:</dt>
+							<dd className="text-foreground">{credit.productName}</dd>
+							<dt className="font-medium text-text-secondary">Monto:</dt>
+							<dd className="font-mono tabular-nums text-foreground">
+								{formatCOP(credit.totalAmount)}
+							</dd>
+							<dt className="font-medium text-text-secondary">Tasa:</dt>
+							<dd className="text-foreground">{credit.interestRate}%</dd>
+						</dl>
 					</div>
 				</div>
 
-				<div className="flex justify-end space-x-2">
-					<Button variant="outline" onClick={onClose}>
-						Cancelar
+				<DialogFooter>
+					<Button variant="ghost" onClick={onClose}>
+						Cerrar
 					</Button>
-				</div>
+				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	);

@@ -1,6 +1,8 @@
 import { auth } from "@/auth.config";
+import PageHeader from "@/components/dashboard/page-header";
 import { fetchCompletedCredits } from "@/lib/actions/credit";
 import { fetchTotalRecaudadoForCompletedCredits } from "@/lib/actions/payment";
+
 import CreditsCompletedTable from "./table";
 
 export default async function CreditsCompletedPage() {
@@ -12,8 +14,11 @@ export default async function CreditsCompletedPage() {
 	]);
 
 	return (
-		<div className="w-full">
-			<h1 className="text-3xl my-3">Créditos Completados</h1>
+		<div>
+			<PageHeader
+				title="Créditos Completados"
+				description="Créditos pagados en su totalidad."
+			/>
 			<CreditsCompletedTable data={credits} totalRecaudado={totalRecaudado} />
 		</div>
 	);

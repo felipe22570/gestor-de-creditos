@@ -1,6 +1,32 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
 import { addMonths, isLastDayOfMonth, endOfMonth } from "date-fns";
+
+// Teach tailwind-merge that our DESIGN.md type-scale aliases are font-size
+// classes, not text-color classes. Without this, twMerge groups them with
+// `text-*` colors and silently drops one when both appear (e.g. `text-small
+// text-primary-foreground` collapses to whichever comes last, which broke
+// primary buttons and active chips).
+const twMerge = extendTailwindMerge({
+	extend: {
+		classGroups: {
+			"font-size": [
+				{
+					text: [
+						"overline",
+						"caption",
+						"small",
+						"body",
+						"subhead",
+						"section",
+						"headline",
+						"display",
+					],
+				},
+			],
+		},
+	},
+});
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));

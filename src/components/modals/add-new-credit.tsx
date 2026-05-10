@@ -1,16 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { createCredit } from "@/lib/actions/credit";
-import { CreditRequest } from "@/types/credit";
+import { Loader2Icon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { createCredit } from "@/lib/actions/credit";
 import { formatCOP, getNextPaymentDate } from "@/lib/utils";
+import { CreditRequest } from "@/types/credit";
+
 import { DatePicker } from "../ui/date-picker";
 
 export default function AddNewCreditModal() {
@@ -70,7 +81,6 @@ export default function AddNewCreditModal() {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// Validate session
 		if (!session?.data?.user?.id) {
 			toast({
 				title: "Error de autenticación",
@@ -81,9 +91,14 @@ export default function AddNewCreditModal() {
 			return;
 		}
 
-		// Validate required fields
-		if (!formData.clientCardId || !formData.clientName || !formData.clientPhone || 
-			!formData.productName || !formData.value || !formData.interestRate) {
+		if (
+			!formData.clientCardId ||
+			!formData.clientName ||
+			!formData.clientPhone ||
+			!formData.productName ||
+			!formData.value ||
+			!formData.interestRate
+		) {
 			toast({
 				title: "Campos requeridos",
 				description: "Por favor completa todos los campos",
@@ -93,7 +108,6 @@ export default function AddNewCreditModal() {
 			return;
 		}
 
-		// Validate numeric values
 		const value = Number(formData.value);
 		const interestRate = Number(formData.interestRate);
 		const clientCardId = Number(formData.clientCardId);
@@ -150,7 +164,7 @@ export default function AddNewCreditModal() {
 			await createCredit(formattedFormData);
 
 			toast({
-				title: "Crédito creado exitosamente!",
+				title: "Crédito creado exitosamente",
 				variant: "success",
 				duration: 1500,
 			});
@@ -176,20 +190,20 @@ export default function AddNewCreditModal() {
 			<DialogTrigger asChild>
 				<Button variant="default">Agregar Nuevo Crédito</Button>
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-[500px] max-h-[95vh] flex flex-col p-0 gap-0">
-				<DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+			<DialogContent className="flex max-h-[95vh] flex-col gap-0 p-0 sm:max-w-[520px]">
+				<DialogHeader className="shrink-0 border-b border-border px-6 pb-4 pt-6">
 					<DialogTitle>Agregar Nuevo Crédito</DialogTitle>
-					<DialogDescription className="sr-only">
+					<DialogDescription>
 						Completa el formulario para registrar un nuevo crédito.
 					</DialogDescription>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-					<div className="flex-1 overflow-y-auto px-6 py-4 grid gap-3">
+				<form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+					<div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
 						<div className="grid grid-cols-2 gap-3">
-							<div className="flex flex-col gap-1.5">
+							<div className="space-y-1.5">
 								<Label htmlFor="clientCardId">
-									Cédula <span className="text-red-500">*</span>
+									Cédula <span className="text-destructive">*</span>
 								</Label>
 								<Input
 									id="clientCardId"
@@ -203,9 +217,9 @@ export default function AddNewCreditModal() {
 									placeholder="Ej: 1234567890"
 								/>
 							</div>
-							<div className="flex flex-col gap-1.5">
+							<div className="space-y-1.5">
 								<Label htmlFor="clientPhone">
-									Teléfono <span className="text-red-500">*</span>
+									Teléfono <span className="text-destructive">*</span>
 								</Label>
 								<Input
 									id="clientPhone"
@@ -220,9 +234,9 @@ export default function AddNewCreditModal() {
 							</div>
 						</div>
 
-						<div className="flex flex-col gap-1.5">
+						<div className="space-y-1.5">
 							<Label htmlFor="clientName">
-								Nombre <span className="text-red-500">*</span>
+								Nombre <span className="text-destructive">*</span>
 							</Label>
 							<Input
 								id="clientName"
@@ -235,9 +249,9 @@ export default function AddNewCreditModal() {
 							/>
 						</div>
 
-						<div className="flex flex-col gap-1.5">
+						<div className="space-y-1.5">
 							<Label htmlFor="productName">
-								Nombre del Producto <span className="text-red-500">*</span>
+								Nombre del Producto <span className="text-destructive">*</span>
 							</Label>
 							<Input
 								id="productName"
@@ -251,9 +265,9 @@ export default function AddNewCreditModal() {
 						</div>
 
 						<div className="grid grid-cols-2 gap-3">
-							<div className="flex flex-col gap-1.5">
+							<div className="space-y-1.5">
 								<Label htmlFor="value">
-									Valor del Crédito <span className="text-red-500">*</span>
+									Valor del Crédito <span className="text-destructive">*</span>
 								</Label>
 								<Input
 									id="value"
@@ -268,9 +282,9 @@ export default function AddNewCreditModal() {
 									placeholder="0"
 								/>
 							</div>
-							<div className="flex flex-col gap-1.5">
+							<div className="space-y-1.5">
 								<Label htmlFor="interestRate">
-									Interés (%) <span className="text-red-500">*</span>
+									Interés (%) <span className="text-destructive">*</span>
 								</Label>
 								<Input
 									id="interestRate"
@@ -287,42 +301,71 @@ export default function AddNewCreditModal() {
 							</div>
 						</div>
 
-						<div className="flex flex-col gap-1.5">
+						<div className="space-y-1.5">
 							<Label htmlFor="creditDate">
 								Fecha de Inicio{" "}
-								<span className="text-muted-foreground font-normal">(opcional)</span>
+								<span className="font-normal text-text-secondary">(opcional)</span>
 							</Label>
 							<DatePicker value={creditDate} onChange={setCreditDate} />
 							{!creditDate && (
-								<p className="text-xs text-muted-foreground">
+								<p className="text-caption text-text-secondary">
 									Por defecto se usará la fecha de hoy
 								</p>
 							)}
 						</div>
 
-						<div className="bg-muted rounded-md px-3 py-2.5 grid grid-cols-3 gap-x-2 text-sm">
-							<div>
-								<p className="text-muted-foreground text-xs">Capital</p>
-								<p className="font-medium">{formatCOP(Number(formData.value) || 0)}</p>
-							</div>
-							<div>
-								<p className="text-muted-foreground text-xs">Interés mensual</p>
-								<p className="font-medium">
-									{formatCOP(Math.floor((Number(formData.value) * Number(formData.interestRate)) / 100) || 0)}
+						<div className="grid grid-cols-3 gap-3 rounded-panel bg-muted px-4 py-3">
+							<div className="space-y-0.5">
+								<p className="text-overline uppercase font-semibold text-text-secondary">
+									Capital
+								</p>
+								<p className="font-mono text-small font-medium tabular-nums text-foreground">
+									{formatCOP(Number(formData.value) || 0)}
 								</p>
 							</div>
-							<div>
-								<p className="text-muted-foreground text-xs">Total</p>
-								<p className="font-semibold">{formatCOP(totalWithInterest)}</p>
+							<div className="space-y-0.5">
+								<p className="text-overline uppercase font-semibold text-text-secondary">
+									Interés mensual
+								</p>
+								<p className="font-mono text-small font-medium tabular-nums text-foreground">
+									{formatCOP(
+										Math.floor(
+											(Number(formData.value) * Number(formData.interestRate)) / 100
+										) || 0
+									)}
+								</p>
+							</div>
+							<div className="space-y-0.5">
+								<p className="text-overline uppercase font-semibold text-text-secondary">
+									Total
+								</p>
+								<p className="font-mono text-small font-semibold tabular-nums text-primary">
+									{formatCOP(totalWithInterest)}
+								</p>
 							</div>
 						</div>
 					</div>
 
-					<div className="px-6 py-4 border-t shrink-0">
-						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? "Creando..." : "Crear Crédito"}
+					<DialogFooter className="shrink-0 border-t border-border px-6 py-4">
+						<Button
+							type="button"
+							variant="ghost"
+							onClick={() => setIsOpen(false)}
+							disabled={isLoading}
+						>
+							Cancelar
 						</Button>
-					</div>
+						<Button type="submit" disabled={isLoading}>
+							{isLoading ? (
+								<>
+									<Loader2Icon className="mr-1 h-4 w-4 animate-spin" />
+									Creando...
+								</>
+							) : (
+								"Crear Crédito"
+							)}
+						</Button>
+					</DialogFooter>
 				</form>
 			</DialogContent>
 		</Dialog>
