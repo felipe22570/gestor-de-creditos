@@ -340,15 +340,22 @@ export default function CreditsActiveTable({ data }: Props) {
 	const visibleColumns = table.getVisibleLeafColumns();
 	const footerContent = useMemo(() => {
 		const totalAmountColumnIndex = visibleColumns.findIndex((col) => col.id === "totalAmount");
+		// Put the "Subtotal" label in the first non-select column so the select
+		// column can stay at its compact w-12 width. If select is hidden, fall
+		// back to index 0.
+		const selectColumnIndex = visibleColumns.findIndex((col) => col.id === "select");
+		const labelColumnIndex = selectColumnIndex === 0 ? 1 : 0;
 
 		return (
 			<TableRow className="bg-muted/40 hover:bg-muted/40">
 				{visibleColumns.map((column, index) => (
 					<TableCell
 						key={column.id}
-						className={cn("font-semibold", index === 0 ? "text-left" : "")}
+						className={cn("font-semibold", column.id === "select" && "w-12 px-3")}
 					>
-						{index === 0 ? (
+						{column.id === "select" ? (
+							""
+						) : index === labelColumnIndex ? (
 							<span className="text-overline uppercase tracking-wide text-text-secondary">
 								Subtotal
 							</span>
