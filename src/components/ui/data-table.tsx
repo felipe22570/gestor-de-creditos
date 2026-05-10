@@ -21,7 +21,7 @@ interface DataTableProps<TData> {
 export function DataTable<TData>({ table, showFooter = false, footerContent }: DataTableProps<TData>) {
 	return (
 		<div>
-			<div className="rounded-md border">
+			<div className="rounded-card border border-border bg-surface overflow-hidden">
 				<Table>
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -59,9 +59,9 @@ export function DataTable<TData>({ table, showFooter = false, footerContent }: D
 							<TableRow>
 								<TableCell
 									colSpan={table.getVisibleLeafColumns().length}
-									className="h-24 text-center"
+									className="h-24 text-center text-text-secondary"
 								>
-									No results.
+									Sin resultados.
 								</TableCell>
 							</TableRow>
 						)}
