@@ -77,11 +77,12 @@ src/
 
 ### Styling Guidelines
 
+-    **Consult `DESIGN.md` at the repo root before any UI work** — it is the canonical design system spec (colors, typography, elevation, component variants, spacing, radii, do's/don'ts)
 -    Use Tailwind CSS utility classes
 -    Follow shadcn/ui design system patterns
 -    Use CSS variables for theming (defined in globals.css)
 -    Implement responsive design with mobile-first approach
--    Use the existing color palette and spacing system
+-    Use the existing color palette and spacing system from `DESIGN.md`
 -    Prefer composition over custom CSS when possible
 
 ### Form Handling

@@ -6,6 +6,38 @@ alwaysApply: false
 
 # Styling & UI Guidelines
 
+## Design System Reference
+
+See `DESIGN.md` at the repo root for the canonical UI specification: colors (indigo primary `#6366F1`), typography (General Sans / DM Sans / JetBrains Mono), elevation, component variants, spacing (4px base), border radii, and do's/don'ts. Consult it before introducing UI changes or new components.
+
+## Configured Tokens — Use These, Not Hardcoded Utilities
+
+```typescript
+// ✅ GOOD — semantic tokens
+<div className="bg-surface text-foreground border border-border rounded-card shadow-card-hover">
+<button className="bg-primary text-primary-foreground hover:bg-primary-hover hover:shadow-primary-glow">
+<span className="text-text-secondary text-small">Metadata</span>
+<h1 className="font-display text-section tracking-heading-tight">Título</h1>
+<Chip className="bg-destructive/10 text-destructive rounded-chip">Vencido</Chip>
+
+// ❌ BAD — hardcoded colors that bypass the design system
+<div className="bg-white text-gray-900 border-gray-200 rounded-lg shadow-lg">
+<button className="bg-indigo-600 text-white hover:bg-indigo-700">
+<span className="text-gray-500 text-sm">Metadata</span>
+<h1 className="text-3xl font-bold">Título</h1>
+<span className="text-red-500">Vencido</span>
+```
+
+**Color tokens**: `background` / `surface` / `foreground` / `text-secondary` / `muted-foreground` / `primary` (+ `primary-hover`) / `secondary` / `success` / `warning` / `destructive` / `border`. Always pair `bg-X` with `text-X-foreground`.
+
+**Font families**: `font-display` (General Sans, headings only) · `font-sans` (DM Sans, default body) · `font-mono` (JetBrains Mono, code/numbers).
+
+**Type scale**: `text-overline` · `text-caption` · `text-small` · `text-body` · `text-subhead` · `text-section` · `text-headline` · `text-display`.
+
+**Radius**: `rounded-chip` (4px) · `rounded-md`/`rounded-lg` (6px) · `rounded-panel` (8px) · `rounded-card` (12px) · `rounded-full`.
+
+**Shadows**: `shadow-card-hover` · `shadow-primary-glow` · `shadow-focus-ring`.
+
 ## Tailwind CSS Patterns
 
 ```typescript
