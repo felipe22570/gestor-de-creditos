@@ -2,6 +2,8 @@ import { Printer, InMemory, Model, Align } from "escpos-buffer";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+const BOLD_STYLE = 0b00001000;
+
 interface CreditData {
 	id: number;
 	clientName: string;
@@ -39,66 +41,67 @@ export async function generatePosInvoice(
 
 	// Header - Información del negocio
 	await printer.setAlignment(Align.Center);
-	await printer.writeln(businessInfo?.name || "GESTOR DE CREDITOS", 0b00001000); // Bold style
+	await printer.writeln(businessInfo?.name || "GESTOR DE CREDITOS", BOLD_STYLE);
 	await printer.writeln();
 
 	if (businessInfo?.phone) {
-		await printer.writeln(`Tel: ${businessInfo.phone}`);
+		await printer.writeln(`Tel: ${businessInfo.phone}`, BOLD_STYLE);
 	}
 	if (businessInfo?.address) {
-		await printer.writeln(businessInfo.address);
+		await printer.writeln(businessInfo.address, BOLD_STYLE);
 	}
 
-	await printer.writeln("================================");
-	await printer.writeln("FACTURA DE CREDITO", 0b00001000); // Bold style
-	await printer.writeln("================================");
+	await printer.writeln("================================", BOLD_STYLE);
+	await printer.writeln("FACTURA DE CREDITO", BOLD_STYLE);
+	await printer.writeln("================================", BOLD_STYLE);
 	await printer.writeln();
 
 	// Información del crédito
 	await printer.setAlignment(Align.Left);
-	await printer.writeln(`Factura No: ${credit.id.toString().padStart(6, "0")}`);
-	await printer.writeln(`Fecha: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`);
+	await printer.writeln(`Factura No: ${credit.id.toString().padStart(6, "0")}`, BOLD_STYLE);
+	await printer.writeln(`Fecha: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, BOLD_STYLE);
 	await printer.writeln();
 
 	// Información del cliente
-	await printer.writeln("DATOS DEL CLIENTE:", 0b00001000); // Bold style
-	await printer.writeln(`Nombre: ${credit.clientName}`);
-	await printer.writeln(`Telefono: ${credit.clientPhone}`);
-	await printer.writeln(`Cedula: ${credit.clientCardId}`);
+	await printer.writeln("DATOS DEL CLIENTE:", BOLD_STYLE);
+	await printer.writeln(`Nombre: ${credit.clientName}`, BOLD_STYLE);
+	await printer.writeln(`Telefono: ${credit.clientPhone}`, BOLD_STYLE);
+	await printer.writeln(`Cedula: ${credit.clientCardId}`, BOLD_STYLE);
 	await printer.writeln();
 
 	// Detalles del crédito
-	await printer.writeln("DETALLES DEL CREDITO:", 0b00001000); // Bold style
-	await printer.writeln(`Producto: ${credit.productName}`);
-	await printer.writeln(`Monto inicial: $${credit.initialAmount.toLocaleString("es-CO")}`);
-	await printer.writeln(`Tasa de interes: ${credit.interestRate}%`);
+	await printer.writeln("DETALLES DEL CREDITO:", BOLD_STYLE);
+	await printer.writeln(`Producto: ${credit.productName}`, BOLD_STYLE);
+	await printer.writeln(`Monto inicial: $${credit.initialAmount.toLocaleString("es-CO")}`, BOLD_STYLE);
+	await printer.writeln(`Tasa de interes: ${credit.interestRate}%`, BOLD_STYLE);
 
 	if (credit.interestAmount && credit.interestAmount > 0) {
-		await printer.writeln(`Interes: $${credit.interestAmount.toLocaleString("es-CO")}`);
+		await printer.writeln(`Interes: $${credit.interestAmount.toLocaleString("es-CO")}`, BOLD_STYLE);
 	}
 
-	await printer.writeln(`TOTAL: $${credit.totalAmount.toLocaleString("es-CO")}`, 0b00001000); // Bold style
+	await printer.writeln(`TOTAL: $${credit.totalAmount.toLocaleString("es-CO")}`, BOLD_STYLE);
 
 	if (credit.numPayments) {
-		await printer.writeln(`Numero de pagos: ${credit.numPayments}`);
+		await printer.writeln(`Numero de pagos: ${credit.numPayments}`, BOLD_STYLE);
 	}
 
 	if (credit.startDate) {
-		await printer.writeln(`Fecha inicio: ${format(credit.startDate, "dd/MM/yyyy", { locale: es })}`);
+		await printer.writeln(`Fecha inicio: ${format(credit.startDate, "dd/MM/yyyy", { locale: es })}`, BOLD_STYLE);
 	}
 
 	if (credit.nextPaymentDate) {
 		await printer.writeln(
-			`Proximo pago: ${format(credit.nextPaymentDate, "dd/MM/yyyy", { locale: es })}`
+			`Proximo pago: ${format(credit.nextPaymentDate, "dd/MM/yyyy", { locale: es })}`,
+			BOLD_STYLE
 		);
 	}
 
 	await printer.writeln();
-	await printer.writeln("================================");
+	await printer.writeln("================================", BOLD_STYLE);
 	await printer.setAlignment(Align.Center);
-	await printer.writeln("¡Gracias por su confianza!");
-	await printer.writeln("Pague puntualmente");
-	await printer.writeln("================================");
+	await printer.writeln("¡Gracias por su confianza!", BOLD_STYLE);
+	await printer.writeln("Pague puntualmente", BOLD_STYLE);
+	await printer.writeln("================================", BOLD_STYLE);
 	await printer.writeln();
 	await printer.writeln();
 	await printer.writeln();
@@ -220,11 +223,15 @@ Pague puntualmente
           <title>Factura de Crédito</title>
           <style>
             body {
-              font-family: 'Courier New', monospace;
+              color: #000;
+              font-family: 'Courier New', Courier, monospace;
               font-size: 12px;
-              line-height: 1.2;
+              font-weight: 700;
+              line-height: 1.3;
               margin: 20px;
               white-space: pre-line;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
             @media print {
               body { margin: 0; }
