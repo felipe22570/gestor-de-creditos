@@ -4,6 +4,14 @@ import { es } from "date-fns/locale";
 
 const BOLD_STYLE = 0b00001000;
 
+const BUSINESS_HEADER_LINES = [
+	"Barberia y variedades Jhon",
+	"Dir Cl 50-50-08 Hispania - Ant",
+	"Tel 3123114596",
+	"Redes",
+	"Barberia y variedades jhon",
+];
+
 interface CreditData {
 	id: number;
 	clientName: string;
@@ -19,14 +27,7 @@ interface CreditData {
 	numPayments?: number | null;
 }
 
-export async function generatePosInvoice(
-	credit: CreditData,
-	businessInfo?: {
-		name?: string;
-		phone?: string;
-		address?: string;
-	}
-): Promise<Buffer> {
+export async function generatePosInvoice(credit: CreditData): Promise<Buffer> {
 	// Create in-memory connection to capture buffer
 	const connection = new InMemory();
 
@@ -41,15 +42,10 @@ export async function generatePosInvoice(
 
 	// Header - Información del negocio
 	await printer.setAlignment(Align.Center);
-	await printer.writeln(businessInfo?.name || "GESTOR DE CREDITOS", BOLD_STYLE);
+	for (const line of BUSINESS_HEADER_LINES) {
+		await printer.writeln(line, BOLD_STYLE);
+	}
 	await printer.writeln();
-
-	if (businessInfo?.phone) {
-		await printer.writeln(`Tel: ${businessInfo.phone}`, BOLD_STYLE);
-	}
-	if (businessInfo?.address) {
-		await printer.writeln(businessInfo.address, BOLD_STYLE);
-	}
 
 	await printer.writeln("================================", BOLD_STYLE);
 	await printer.writeln("FACTURA DE CREDITO", BOLD_STYLE);
@@ -165,18 +161,9 @@ export function printViaSystemDialog(buffer: Buffer, fileName: string = "factura
 	URL.revokeObjectURL(url);
 }
 
-export function printAsText(
-	credit: CreditData,
-	businessInfo?: {
-		name?: string;
-		phone?: string;
-		address?: string;
-	}
-): void {
+export function printAsText(credit: CreditData): void {
 	const content = `
-${businessInfo?.name || "GESTOR DE CREDITOS"}
-${businessInfo?.phone ? `Tel: ${businessInfo.phone}` : ""}
-${businessInfo?.address || ""}
+${BUSINESS_HEADER_LINES.join("\n")}
 
 ================================
 FACTURA DE CREDITO

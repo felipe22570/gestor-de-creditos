@@ -3,9 +3,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import {
 	generatePosInvoice,
@@ -38,11 +35,6 @@ interface PrintInvoiceModalProps {
 
 export default function PrintInvoiceModal({ isOpen, onClose, credit }: PrintInvoiceModalProps) {
 	const [isLoading, setIsLoading] = useState(false);
-	const [businessInfo, setBusinessInfo] = useState({
-		name: "GESTOR DE CREDITOS",
-		phone: "",
-		address: "",
-	});
 	const { toast } = useToast();
 
 	const handlePrintThermal = async () => {
@@ -50,7 +42,7 @@ export default function PrintInvoiceModal({ isOpen, onClose, credit }: PrintInvo
 
 		setIsLoading(true);
 		try {
-			const buffer = await generatePosInvoice(credit, businessInfo);
+			const buffer = await generatePosInvoice(credit);
 			await printToThermalPrinter(buffer);
 
 			toast({
@@ -76,7 +68,7 @@ export default function PrintInvoiceModal({ isOpen, onClose, credit }: PrintInvo
 		if (!credit) return;
 
 		try {
-			const buffer = await generatePosInvoice(credit, businessInfo);
+			const buffer = await generatePosInvoice(credit);
 			const fileName = `factura-${credit.id}-${Date.now()}.bin`;
 			printViaSystemDialog(buffer, fileName);
 
@@ -99,7 +91,7 @@ export default function PrintInvoiceModal({ isOpen, onClose, credit }: PrintInvo
 		if (!credit) return;
 
 		try {
-			printAsText(credit, businessInfo);
+			printAsText(credit);
 
 			toast({
 				title: "Éxito",
@@ -129,57 +121,6 @@ export default function PrintInvoiceModal({ isOpen, onClose, credit }: PrintInvo
 				</DialogHeader>
 
 				<div className="space-y-6">
-					{/* Información del negocio */}
-					<div className="space-y-4">
-						<h4 className="text-sm font-medium">Información del Negocio</h4>
-						<div className="grid gap-3">
-							<div>
-								<Label htmlFor="business-name">Nombre del Negocio</Label>
-								<Input
-									id="business-name"
-									value={businessInfo.name}
-									onChange={(e) =>
-										setBusinessInfo((prev) => ({
-											...prev,
-											name: e.target.value,
-										}))
-									}
-									placeholder="Nombre de su negocio"
-								/>
-							</div>
-							<div>
-								<Label htmlFor="business-phone">Teléfono</Label>
-								<Input
-									id="business-phone"
-									value={businessInfo.phone}
-									onChange={(e) =>
-										setBusinessInfo((prev) => ({
-											...prev,
-											phone: e.target.value,
-										}))
-									}
-									placeholder="Teléfono del negocio"
-								/>
-							</div>
-							<div>
-								<Label htmlFor="business-address">Dirección</Label>
-								<Input
-									id="business-address"
-									value={businessInfo.address}
-									onChange={(e) =>
-										setBusinessInfo((prev) => ({
-											...prev,
-											address: e.target.value,
-										}))
-									}
-									placeholder="Dirección del negocio"
-								/>
-							</div>
-						</div>
-					</div>
-
-					<Separator />
-
 					{/* Opciones de impresión */}
 					<div className="space-y-4">
 						<h4 className="text-sm font-medium">Opciones de Impresión</h4>
